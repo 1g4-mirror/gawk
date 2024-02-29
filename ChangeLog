@@ -1,3 +1,34 @@
+2024-02-29         Arnold D. Robbins     <arnold@skeeve.com>
+
+	Document all the changes needed for MinRX integration.
+	Some of these are temporary while MinRX is still in C++;
+	it should eventually be rewritten in C.
+
+	* Makefile.am (CCLD): Set to g++ in order to get gawk to link.
+	* awk.h: Include "minrx.h".
+	(struct Regexp): Add in minrx members.
+	(restart, re_end, resubpatstart, resubpatend, renumsubpats): Declare
+	new functions.
+	(RESTART, RE_END, RESUBPATSTART, RESUBPATEND, RENUMSUBPATS): Change
+	the macros to call the functions.
+	(use_gnu_matchers): Declare new variable.
+	* awkgram.y: Lint warning about /*...*/ comment is only true for
+	the GNU matchers.
+	* builtin.c (do_match): `s' is now ssize_t.
+	(do_sub): Fix args to SUBPATSTART macro.  Fix value of len
+	parameter in all to research depending upon the matcher.
+	* configure.ac: Set CXXFLAGS if we have C++ versions of the files.
+	* main.c (use_gnu_matchers): Define, set to false.
+	(main): Check for GAWK_GNU_MATCHERS env var and set use_gnu_matchers
+	to true if it exists.
+	(parse_args): Temporarily add 'G' flag for using GNU matchers.
+	* re.c (get_minrx_regerror): New routine.
+	(make_regexp): Adjust for the fact that we can use either GNU matchers
+	or minrx.
+	(research): Ditto.
+	(restart, re_end, resubpatstart, resubpatend, renumsubpats): New functions.
+	Eventually these should be turned back into macros.
+	
 2024-02-23         Arnold D. Robbins     <arnold@skeeve.com>
 
 	Another attempt to fix the race conditions on SIGPIPE. See

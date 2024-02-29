@@ -1,3 +1,17 @@
+2024-02-29         Arnold D. Robbins     <arnold@skeeve.com>
+
+	MinRX changes.
+
+	* test/Gentests: Add GAWK_TEST_ARGS to .sh tests.
+	* Makefile.am (EXTRA_DIST): regexuparraw is a new test.
+	* regexuparrow.awk, regexuparrow.in, regexuparrow.ok: New files.
+	* lintwarn.awk: Comment out a now invalid test.
+	* lintwarn.ok: Adjust.
+	* regex3minus.ok: Adjust.
+	* regexpbad.ok: Adjust.
+	* reindops.awk, reindops.ok: Adjust.
+	* trailbs.ok: Adjust.
+
 2024-01-28         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (EXTRA_DIST): New tests: match4.

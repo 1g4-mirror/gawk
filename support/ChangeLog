@@ -1,3 +1,9 @@
+2024-02-29         Arnold D. Robbins     <arnold@skeeve.com>
+
+	Changes for MinRX.
+
+	* Makefile.am (libsupport_a_SOURCES): Add minrx.h and minrx.cpp.
+
 2024-02-01         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (distclean-local): Remove malloc/.deps
