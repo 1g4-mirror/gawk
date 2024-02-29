@@ -223,7 +223,6 @@ AM_V_CC = $(am__v_CC_@AM_V@)
 am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
-CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
@@ -483,6 +482,7 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = @CFLAGS@
 AM_LDFLAGS = @LDFLAGS@
+CCLD = g++	# temporary, until minrx is rewritten in C
 
 # Stuff to include in the dist that doesn't need it's own
 # Makefile.am files

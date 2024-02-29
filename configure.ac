@@ -147,6 +147,13 @@ fi
 
 AC_SUBST(CFLAGS)
 
+if test -f $srcdir/support/minrx.h && test -f $srcdir/support/minrx.cpp
+then
+	CXXFLAGS='-std=c++17'
+fi
+
+AC_SUBST(CXXFLAGS)
+
 # shared library suffix for dynamic loading:
 AC_SUBST(acl_shlibext)
 

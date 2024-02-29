@@ -7876,6 +7876,13 @@ fi
 
 
 
+if test -f $srcdir/support/minrx.h && test -f $srcdir/support/minrx.cpp
+then
+	CXXFLAGS='-std=c++17'
+fi
+
+
+
 # shared library suffix for dynamic loading:
 
 
