@@ -26,8 +26,6 @@
 
 AM_CPPFLAGS = -I$(srcdir)/..
 
-AM_CXXFLAGS = @CXXFLAGS@
-
 # This variable insures that aclocal runs
 # correctly after changing configure.ac
 ACLOCAL_AMFLAGS = -I ../m4
