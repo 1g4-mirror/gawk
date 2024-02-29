@@ -15,8 +15,8 @@
 	* awkgram.y: Lint warning about /*...*/ comment is only true for
 	the GNU matchers.
 	* builtin.c (do_match): `s' is now ssize_t.
-	(do_sub): Fix args to SUBPATSTART macro.  Fix value of len
-	parameter in all to research depending upon the matcher.
+	(do_sub): Fix value of len parameter in all to research depending upon
+	the matcher.
 	* configure.ac: Set CXXFLAGS if we have C++ versions of the files.
 	* main.c (use_gnu_matchers): Define, set to false.
 	(main): Check for GAWK_GNU_MATCHERS env var and set use_gnu_matchers
@@ -29,6 +29,10 @@
 	(restart, re_end, resubpatstart, resubpatend, renumsubpats): New functions.
 	Eventually these should be turned back into macros.
 	
+2024-02-29         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* re.c (do_sub): Fix arguments in call to SUBPATSTART().
+
 2024-02-23         Arnold D. Robbins     <arnold@skeeve.com>
 
 	Another attempt to fix the race conditions on SIGPIPE. See
