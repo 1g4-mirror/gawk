@@ -236,7 +236,6 @@ make_regexp(const char *s, size_t len, bool ignorecase, bool dfa, bool canfatal)
 			 * once the awk program is running. Therefore,
 			 * neither does ok_to_escape.
 			 */
-		do_default:
 			if (ok_to_escape == NULL) {
 				if (do_posix || do_traditional)
 					ok_to_escape = "{}()|*+?.^$\\[]/-";
