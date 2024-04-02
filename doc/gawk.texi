@@ -569,6 +569,7 @@ particular records in a file and perform operations upon them.
 * Computed Regexps::                    Using Dynamic Regexps.
 * GNU Regexp Operators::                Operators specific to GNU software.
 * Case-sensitivity::                    How to do case-insensitive matching.
+* Choosing Matchers::                   Selecting the regexp matcher.
 * Regexp Summary::                      Regular expressions summary.
 * Records::                             Controlling how data is split into
                                         records.
@@ -5410,6 +5411,7 @@ regular expressions work, we present more complicated instances.
 * Computed Regexps::            Using Dynamic Regexps.
 * GNU Regexp Operators::        Operators specific to GNU software.
 * Case-sensitivity::            How to do case-insensitive matching.
+* Choosing Matchers::           Selecting the regexp matcher.
 * Regexp Summary::              Regular expressions summary.
 @end menu
 
@@ -6686,6 +6688,45 @@ right thing.}
 The value of @code{IGNORECASE} has no effect if @command{gawk} is in
 compatibility mode (@pxref{Options}).
 Case is always significant in compatibility mode.
+
+@node Choosing Matchers
+@section Selecting the Regexp Matching Engine
+
+Release @strong{FIXME: 5.x.y} of @command{gawk} introduced a new
+regular expression matching engine, named MinRX (see FIXME: URL
+here).
+
+MinRX is fully compliant with the POSIX standard for Extended
+Regular Expressions (EREs), including the additional features needed
+by @command{awk} and @command{gawk}.  It is also a little stricter
+in terms of accepting valid regular expression syntax when specifying
+a regexp.  (These restrictions apply to corner cases that should
+not come up in day-to-day use.)
+
+Previously, @command{gawk} used GNU @code{regex} and @code{dfa}
+from GNULIB. These matchers are fast and generally robust, albeit not
+fully POSIX compliant.  MinRX replaces both of them.
+
+Because regular expression matching is such a fundamental part of what
+@command{awk} programs do, introducing a new regular expression engine
+has some risk associated with it.  To alleviate the risk, for the
+term of one major release, @command{gawk} continues to provide access
+to the original regexp matchers should that be needed.
+
+@cindex environment variables @subentry @env{GAWK_GNU_MATCHERS}
+If the environment variable @env{GAWK_GNU_MATCHERS} exists, then
+@command{gawk} switches to using GNU @code{regex} and @code{dfa},
+as previously.  Otherwise, the MinRX matcher is the default and
+that is what it uses.
+
+Should you find a need to switch from MinRX to the original matchers,
+@emph{please} submit a bug report describing what did not work
+(@pxref{Bugs}).  Doing so is very important, as it will help the
+maintainers and the MinRX author to fix any issues that are found.
+
+After one major release, the old matchers, and the use of the
+@env{GAWK_GNU_MATCHERS} environment variable, will be removed
+from @command{gawk}.
 
 @node Regexp Summary
 @section Summary

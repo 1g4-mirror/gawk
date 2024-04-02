@@ -1,3 +1,8 @@
+2024-04-02         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* gawk.texi (Choosing Matchers): New section on MinRX vs.
+	the GNU matchers.
+
 2024-03-03         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* gawk.texi (Extension Sample Inplace): Document that it
