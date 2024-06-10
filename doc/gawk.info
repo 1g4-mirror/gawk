@@ -31209,6 +31209,8 @@ unfortunately.  It added the following features:
      value-add was never very much and it caused problems in some
      environments.
 
+   • Support for OSF/1 was removed.
+
 
 File: gawk.info,  Node: Common Extensions,  Next: Ranges and Locales,  Prev: Feature History,  Up: Language History
 
@@ -40420,79 +40422,79 @@ Node: POSIX1275541
 Node: BTL1276966
 Node: POSIX/GNU1277733
 Node: Feature History1284388
-Node: Common Extensions1304190
-Node: Ranges and Locales1305665
-Ref: Ranges and Locales-Footnote-11310450
-Ref: Ranges and Locales-Footnote-21310477
-Ref: Ranges and Locales-Footnote-31310712
-Node: Contributors1310935
-Node: History summary1317126
-Node: Installation1318568
-Node: Gawk Distribution1319532
-Node: Getting1320024
-Node: Extracting1321023
-Node: Distribution contents1322729
-Node: Unix Installation1330619
-Node: Quick Installation1331439
-Node: Compiling with MPFR1333979
-Node: Shell Startup Files1334685
-Node: Additional Configuration Options1335842
-Node: Configuration Philosophy1338225
-Node: Compiling from Git1340725
-Node: Building the Documentation1341284
-Node: Non-Unix Installation1342696
-Node: PC Installation1343172
-Node: PC Binary Installation1344041
-Node: PC Compiling1344934
-Node: PC Using1346112
-Node: Cygwin1349828
-Node: MSYS1351080
-Node: OpenVMS Installation1351706
-Node: OpenVMS Compilation1352387
-Ref: OpenVMS Compilation-Footnote-11353870
-Node: OpenVMS Dynamic Extensions1353928
-Node: OpenVMS Installation Details1355564
-Node: OpenVMS Running1357995
-Node: OpenVMS GNV1362132
-Node: Bugs1362887
-Node: Bug definition1363807
-Node: Bug address1367408
-Node: Usenet1370977
-Node: Performance bugs1372190
-Node: Asking for help1375206
-Node: Maintainers1377193
-Node: Other Versions1378220
-Node: Installation summary1387824
-Node: Notes1389206
-Node: Compatibility Mode1390016
-Node: Additions1390838
-Node: Accessing The Source1391783
-Node: Adding Code1393314
-Node: New Ports1400425
-Node: Derived Files1404928
-Ref: Derived Files-Footnote-11410739
-Ref: Derived Files-Footnote-21410774
-Ref: Derived Files-Footnote-31411385
-Node: Future Extensions1411499
-Node: Implementation Limitations1412169
-Node: Extension Design1413411
-Node: Old Extension Problems1414571
-Ref: Old Extension Problems-Footnote-11416143
-Node: Extension New Mechanism Goals1416204
-Ref: Extension New Mechanism Goals-Footnote-11419674
-Node: Extension Other Design Decisions1419875
-Node: Extension Future Growth1422072
-Node: Notes summary1422692
-Node: Basic Concepts1423902
-Node: Basic High Level1424587
-Ref: figure-general-flow1424869
-Ref: figure-process-flow1425571
-Ref: Basic High Level-Footnote-11428941
-Node: Basic Data Typing1429130
-Node: Glossary1432538
-Node: Copying1465417
-Node: GNU Free Documentation License1502975
-Node: Index1528098
+Node: Common Extensions1304229
+Node: Ranges and Locales1305704
+Ref: Ranges and Locales-Footnote-11310489
+Ref: Ranges and Locales-Footnote-21310516
+Ref: Ranges and Locales-Footnote-31310751
+Node: Contributors1310974
+Node: History summary1317165
+Node: Installation1318607
+Node: Gawk Distribution1319571
+Node: Getting1320063
+Node: Extracting1321062
+Node: Distribution contents1322768
+Node: Unix Installation1330658
+Node: Quick Installation1331478
+Node: Compiling with MPFR1334018
+Node: Shell Startup Files1334724
+Node: Additional Configuration Options1335881
+Node: Configuration Philosophy1338264
+Node: Compiling from Git1340764
+Node: Building the Documentation1341323
+Node: Non-Unix Installation1342735
+Node: PC Installation1343211
+Node: PC Binary Installation1344080
+Node: PC Compiling1344973
+Node: PC Using1346151
+Node: Cygwin1349867
+Node: MSYS1351119
+Node: OpenVMS Installation1351745
+Node: OpenVMS Compilation1352426
+Ref: OpenVMS Compilation-Footnote-11353909
+Node: OpenVMS Dynamic Extensions1353967
+Node: OpenVMS Installation Details1355603
+Node: OpenVMS Running1358034
+Node: OpenVMS GNV1362171
+Node: Bugs1362926
+Node: Bug definition1363846
+Node: Bug address1367447
+Node: Usenet1371016
+Node: Performance bugs1372229
+Node: Asking for help1375245
+Node: Maintainers1377232
+Node: Other Versions1378259
+Node: Installation summary1387863
+Node: Notes1389245
+Node: Compatibility Mode1390055
+Node: Additions1390877
+Node: Accessing The Source1391822
+Node: Adding Code1393353
+Node: New Ports1400464
+Node: Derived Files1404967
+Ref: Derived Files-Footnote-11410778
+Ref: Derived Files-Footnote-21410813
+Ref: Derived Files-Footnote-31411424
+Node: Future Extensions1411538
+Node: Implementation Limitations1412208
+Node: Extension Design1413450
+Node: Old Extension Problems1414610
+Ref: Old Extension Problems-Footnote-11416182
+Node: Extension New Mechanism Goals1416243
+Ref: Extension New Mechanism Goals-Footnote-11419713
+Node: Extension Other Design Decisions1419914
+Node: Extension Future Growth1422111
+Node: Notes summary1422731
+Node: Basic Concepts1423941
+Node: Basic High Level1424626
+Ref: figure-general-flow1424908
+Ref: figure-process-flow1425610
+Ref: Basic High Level-Footnote-11428980
+Node: Basic Data Typing1429169
+Node: Glossary1432577
+Node: Copying1465456
+Node: GNU Free Documentation License1503014
+Node: Index1528137
 
 End Tag Table
 

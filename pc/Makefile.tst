@@ -1077,7 +1077,7 @@ testext::
 	@echo $@
 	@-$(AWK) ' /^(@load|BEGIN|function)/,/^}/' "$(top_srcdir)"/extension/testext.c > testext.awk
 	@-$(AWK) -f ./testext.awk >_$@ 2>&1 || echo EXIT CODE: $$? >>_$@
-	@-if echo "$$GAWK_TEST_ARGS" | grep -E -e '-M|--bignum' > /dev/null; \
+	@-if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null; \
 	then $(CMP) "$(srcdir)"/$@-mpfr.ok _$@ && rm -f _$@ testext.awk testexttmp.txt ; \
 	else $(CMP) "$(srcdir)"/$@.ok _$@ && rm -f _$@ testext.awk testexttmp.txt ; fi
 
@@ -1232,7 +1232,7 @@ ignrcas3::
 arrdbg:
 	@echo $@
 	@-$(AWK) -v "okfile=./$@.ok" -v "mpfr_okfile=./$@-mpfr.ok" -f "$(srcdir)"/$@.awk | grep array_f >_$@ || echo EXIT CODE: $$? >> _$@
-	@-if echo "$$GAWK_TEST_ARGS" | grep -E -e '-M|--bignum' > /dev/null; \
+	@-if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null; \
 	then $(CMP) "."/$@-mpfr.ok _$@ && rm -f _$@ $@.ok $@-mpfr.ok ; \
 	else $(CMP) "."/$@.ok _$@ && rm -f _$@ $@.ok $@-mpfr.ok ; fi
 
@@ -2040,7 +2040,7 @@ numindex:
 numrange:
 	@echo $@ $(ZOS_FAIL)
 	@-AWKPATH="$(srcdir)" $(AWK) -f $@.awk  >_$@ 2>&1 || echo EXIT CODE: $$? >>_$@
-	@-if echo "$$GAWK_TEST_ARGS" | egrep -q -e '-M|--bignum' > /dev/null ; \
+	@-if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null ; \
 	then $(CMP) "$(srcdir)"/$@-mpfr.ok _$@ && rm -f _$@ ; \
 	else $(CMP) "$(srcdir)"/$@.ok _$@ && rm -f _$@ ; fi
 
@@ -2218,7 +2218,7 @@ prtoeval:
 rand:
 	@echo $@
 	@-AWKPATH="$(srcdir)" $(AWK) -f $@.awk  >_$@ 2>&1 || echo EXIT CODE: $$? >>_$@
-	@-if echo "$$GAWK_TEST_ARGS" | egrep -q -e '-M|--bignum' > /dev/null ; \
+	@-if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null ; \
 	then $(CMP) "$(srcdir)"/$@-mpfr.ok _$@ && rm -f _$@ ; \
 	else $(CMP) "$(srcdir)"/$@.ok _$@ && rm -f _$@ ; fi
 
@@ -2709,7 +2709,7 @@ arraysort2:
 arraytype:
 	@echo $@
 	@-AWKPATH="$(srcdir)" $(AWK) -f $@.awk  >_$@ 2>&1 || echo EXIT CODE: $$? >>_$@
-	@-if echo "$$GAWK_TEST_ARGS" | egrep -q -e '-M|--bignum' > /dev/null ; \
+	@-if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null ; \
 	then $(CMP) "$(srcdir)"/$@-mpfr.ok _$@ && rm -f _$@ ; \
 	else $(CMP) "$(srcdir)"/$@.ok _$@ && rm -f _$@ ; fi
 
@@ -3746,14 +3746,14 @@ fmttest:
 fnarydel:
 	@echo $@
 	@-AWKPATH="$(srcdir)" $(AWK) -f $@.awk  >_$@ 2>&1 || echo EXIT CODE: $$? >>_$@
-	@-if echo "$$GAWK_TEST_ARGS" | egrep -q -e '-M|--bignum' > /dev/null ; \
+	@-if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null ; \
 	then $(CMP) "$(srcdir)"/$@-mpfr.ok _$@ && rm -f _$@ ; \
 	else $(CMP) "$(srcdir)"/$@.ok _$@ && rm -f _$@ ; fi
 
 fnparydl:
 	@echo $@
 	@-AWKPATH="$(srcdir)" $(AWK) -f $@.awk  >_$@ 2>&1 || echo EXIT CODE: $$? >>_$@
-	@-if echo "$$GAWK_TEST_ARGS" | egrep -q -e '-M|--bignum' > /dev/null ; \
+	@-if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null ; \
 	then $(CMP) "$(srcdir)"/$@-mpfr.ok _$@ && rm -f _$@ ; \
 	else $(CMP) "$(srcdir)"/$@.ok _$@ && rm -f _$@ ; fi
 
@@ -3976,9 +3976,9 @@ diffout:
 		if [ "$$i" != "_*" ]; then \
 		echo ============== $$i ============= ; \
 		base=`echo $$i | sed 's/^_//'` ; \
-		if echo "$$GAWK_TEST_ARGS" | grep -E -e '-M|--bignum' > /dev/null && [ -r $${base}-mpfr.ok ]; then \
+		if echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null && [ -r $${base}-mpfr.ok ]; then \
 		diff -u $${base}-mpfr.ok $$i ; \
-		elif echo "$$GAWK_TEST_ARGS" | grep -E -e '-M|--bignum' > /dev/null && [ -r "$(srcdir)"/$${base}-mpfr.ok ]; then \
+		elif echo "$$GAWK_TEST_ARGS" | egrep -s -e '-M|--bignum' > /dev/null && [ -r "$(srcdir)"/$${base}-mpfr.ok ]; then \
 		diff -u "$(srcdir)"/$${base}-mpfr.ok $$i ; \
 		elif [ -r $${base}.ok ]; then \
 		diff -u $${base}.ok $$i ; \
