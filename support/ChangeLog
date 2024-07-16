@@ -1,3 +1,7 @@
+2024-07-16         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* Makefile.am (CXXFLAGS): Added for new version of minrx.
+
 2024-04-26         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* cdefs.h, dfa.h, dynarray.h, flexmember.h, idx.h,
