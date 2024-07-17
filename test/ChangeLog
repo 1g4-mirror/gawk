@@ -1,3 +1,7 @@
+2024-07-17         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* trailbs.ok: Updated after minrx code change.
+
 2024-06-13         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (EXTRA_DIST): Add asortsymtab-mpfr.ok.
