@@ -1,3 +1,7 @@
+2024-07-20         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* minrx.h, minrx.cpp: New files.
+
 2024-07-16         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (CXXFLAGS): Added for new version of minrx.
