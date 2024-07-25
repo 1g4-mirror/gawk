@@ -1,3 +1,8 @@
+2024-07-25         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* re.c (refree): Call minrx_regfree() on rp->mre_pat.
+	Thanks to valgrind and Mike Haertel.
+
 2024-07-20         Tim Rice              <trice@posteo.net>
 
 	* io.c (csvscan): Set the sentinel if we found CR-LF.

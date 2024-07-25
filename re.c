@@ -485,6 +485,7 @@ refree(Regexp *rp)
 		free(rp->dfareg);
 	}
 	efree(rp->mre_regs);
+	minrx_regfree(& rp->mre_pat);
 	efree(rp);
 }
 
