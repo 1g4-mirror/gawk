@@ -859,5 +859,5 @@ re_numsubpats(Regexp *rp, const char *s)
 	if (use_gnu_matchers)
 		return rp->regs.num_regs;
 	else
-		return rp->mre_pat.re_nsub;
+		return rp->mre_pat.re_nsub + 1;
 }

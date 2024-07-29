@@ -1,3 +1,7 @@
+2024-07-29         Mike Haertel		 <mike@ducky.net>
+
+	* re.c (re_numsubpats): For MinRX, return re_nsub + 1.
+
 2024-07-28         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* TODO: Updated.
