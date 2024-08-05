@@ -32914,10 +32914,10 @@ to follow:
      Unpack the source code in a new directory, and configure it:
 
           $ tar -xpzvf gawk-X.Y.Z.tar.gz
-          ⊣ ...                                Output omitted
+          ...                                Output omitted
           $ cd gawk-X.Y.Z
           $ ./configure
-          ⊣ ...                                Output omitted
+          ...                                Output omitted
 
   3. Edit the files ‘Makefile’ and ‘support/Makefile’.  Change every
      instance of ‘-O2’ or ‘-O’ to ‘-pg’.  This causes ‘gawk’ to be
@@ -32926,7 +32926,7 @@ to follow:
   4. Compile the program by running the ‘make’ command:
 
           $ make
-          ⊣ ...                                Output omitted
+          ...                                Output omitted
 
   5. Run the freshly compiled ‘gawk’ on a _real_ program, using _real_
      data.  Using an artificial program to try to time one particular
@@ -40522,40 +40522,40 @@ Node: Bug definition1366300
 Node: Bug address1369901
 Node: Usenet1373470
 Node: Performance bugs1374683
-Node: Asking for help1377699
-Node: Maintainers1379686
-Node: Other Versions1380713
-Node: Installation summary1390317
-Node: Notes1391699
-Node: Compatibility Mode1392509
-Node: Additions1393331
-Node: Accessing The Source1394276
-Node: Adding Code1395807
-Node: New Ports1402918
-Node: Derived Files1407421
-Ref: Derived Files-Footnote-11413232
-Ref: Derived Files-Footnote-21413267
-Ref: Derived Files-Footnote-31413878
-Node: Future Extensions1413992
-Node: Implementation Limitations1414662
-Node: Extension Design1415904
-Node: Old Extension Problems1417064
-Ref: Old Extension Problems-Footnote-11418636
-Node: Extension New Mechanism Goals1418697
-Ref: Extension New Mechanism Goals-Footnote-11422167
-Node: Extension Other Design Decisions1422368
-Node: Extension Future Growth1424565
-Node: Notes summary1425185
-Node: Basic Concepts1426395
-Node: Basic High Level1427080
-Ref: figure-general-flow1427362
-Ref: figure-process-flow1428064
-Ref: Basic High Level-Footnote-11431434
-Node: Basic Data Typing1431623
-Node: Glossary1435031
-Node: Copying1467909
-Node: GNU Free Documentation License1505467
-Node: Index1530590
+Node: Asking for help1377687
+Node: Maintainers1379674
+Node: Other Versions1380701
+Node: Installation summary1390305
+Node: Notes1391687
+Node: Compatibility Mode1392497
+Node: Additions1393319
+Node: Accessing The Source1394264
+Node: Adding Code1395795
+Node: New Ports1402906
+Node: Derived Files1407409
+Ref: Derived Files-Footnote-11413220
+Ref: Derived Files-Footnote-21413255
+Ref: Derived Files-Footnote-31413866
+Node: Future Extensions1413980
+Node: Implementation Limitations1414650
+Node: Extension Design1415892
+Node: Old Extension Problems1417052
+Ref: Old Extension Problems-Footnote-11418624
+Node: Extension New Mechanism Goals1418685
+Ref: Extension New Mechanism Goals-Footnote-11422155
+Node: Extension Other Design Decisions1422356
+Node: Extension Future Growth1424553
+Node: Notes summary1425173
+Node: Basic Concepts1426383
+Node: Basic High Level1427068
+Ref: figure-general-flow1427350
+Ref: figure-process-flow1428052
+Ref: Basic High Level-Footnote-11431422
+Node: Basic Data Typing1431611
+Node: Glossary1435019
+Node: Copying1467897
+Node: GNU Free Documentation License1505455
+Node: Index1530578
 
 End Tag Table
 
