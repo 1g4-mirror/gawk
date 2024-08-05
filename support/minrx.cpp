@@ -265,9 +265,11 @@ public:
 		wchar_t wct = L'\0';
 		if ((cp += len) != ep) {
 			auto n = mbrtowc(&wct, cp, ep - cp, &mbs);
-			if (n == 0 || n == (std::size_t) -1 || n == (std::size_t) -2)
+			if (n == 0 || n == (std::size_t) -1 || n == (std::size_t) -2) {
 				len = 1;
-			else
+				if (wct == L'\0')
+					wct = *cp & 0xff;	// or some other magic or 0x80000000
+			} else
 				len = n;
 			wch = wct;
 		} else {
@@ -316,6 +318,8 @@ struct CSet {
 	}
 	CSet &set(WChar wc) { return set(wc, wc); }
 	bool test(WChar wc) const {
+		if (inverted && wc < 0)
+			return false;
 		auto i = ranges.lower_bound(Range(wc, wc));
 		return inverted ^ (i != ranges.end() && wc >= i->min && wc <= i->max);
 	}
