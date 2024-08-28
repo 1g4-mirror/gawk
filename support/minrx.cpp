@@ -18,7 +18,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <cctype>
 #include <climits>
 #include <clocale>
 #include <cstddef>
@@ -548,7 +547,7 @@ struct Compile {
 				wconv.nextchr();
 				continue;
 			case L'{':
-				if ((flags & MINRX_REG_BRACE_COMPAT) == 0 || std::isdigit(wconv.lookahead(&WConv::nextchr))) {
+				if ((flags & MINRX_REG_BRACE_COMPAT) == 0 || std::iswdigit(wconv.lookahead(&WConv::nextchr))) {
 					if (optional || infinite) {
 						lh = mkrep(lh, optional, infinite, nstk);
 						optional = infinite = false;
@@ -621,7 +620,7 @@ struct Compile {
 			wconv.nextchr();
 			break;
 		case L'{':
-			if ((flags & MINRX_REG_BRACE_COMPAT) != 0 && !std::isdigit(wconv.lookahead(&WConv::nextchr)))
+			if ((flags & MINRX_REG_BRACE_COMPAT) != 0 && !std::iswdigit(wconv.lookahead(&WConv::nextchr)))
 				goto normal;
 			// fall through
 		case L'*':
@@ -1038,7 +1037,7 @@ struct Execute {
 		auto nodes = &r.nodes[0];
 		wconv.nextchr();
 		if ((flags & MINRX_REG_RESUME) != 0 && rm && rm[0].rm_eo > 0)
-			while (wconv.look() != WConv::End && wconv.off() < rm[0].rm_eo)
+			while (wconv.look() != WConv::End && (std::ptrdiff_t) wconv.off() < rm[0].rm_eo)
 				lookback = wconv.look(), wconv.nextchr();
 		NState nsinit(allocator);
 		nsinit.boff = wconv.off();
@@ -1054,7 +1053,7 @@ struct Execute {
 				auto [n, ns] = mcsvs[0].remove();
 				auto t = nodes[n].type;
 				if (t <= WCharMax) {
-					if (wc != t)
+					if (wc != (WChar) t)
 						continue;
 				} else {
 					if (!r.csets[nodes[n].args[0]].test(wc))
@@ -1078,7 +1077,7 @@ struct Execute {
 				auto [n, ns] = mcsvs[1].remove();
 				auto t = nodes[n].type;
 				if (t <= WCharMax) {
-					if (wc != t)
+					if (wc != (WChar) t)
 						continue;
 				} else {
 					if (!r.csets[nodes[n].args[0]].test(wc))
