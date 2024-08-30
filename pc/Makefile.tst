@@ -459,7 +459,7 @@ pma-tests:
 	fi
 
 makepmafile: makepmafile.c
-	$(CC) $< -o $@
+	$(CC) makepmafile.c -o $@
 
 pma:
 	@echo $@
