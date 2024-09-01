@@ -1,3 +1,7 @@
+2024-09-01         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* re.c (make_regexp): Add MINRX_REG_NATIVE1B flag.
+
 2024-08-28         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (CCLD): Set to $(CXX) so that builds with clang

@@ -1,3 +1,8 @@
+2024-09-01         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* backbigs1.in, backbigs1.ok: Use a valid non-space
+	character instead of an invalid one.
+
 2024-08-30         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (makepmafile): Don't ues $< in the rule, that's a
