@@ -1,3 +1,7 @@
+2024-09-04         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* Checklist: Add two more items to do.
+
 2024-09-01         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* re.c (make_regexp): Add MINRX_REG_NATIVE1B flag.

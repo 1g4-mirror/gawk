@@ -33340,6 +33340,14 @@ QSE ‘awk’
      needs.  For more information, see
      <https://www.kylheku.com/cgit/cppawk/>.
 
+‘wak’
+     ‘wak’ (a permutation of the letters in ‘awk’) is a small, mostly
+     POSIX compatible version of ‘awk’ written in C by Ray Gardner.  The
+     source code is available from its Github repository
+     (https://github.com/raygard/wak).  Some nice articles about its
+     development may be found in the author's weblog
+     (https://www.raygard.net/awkdoc/).
+
 Other versions
      See also the "Versions and implementations" section of the
      Wikipedia article
@@ -38249,6 +38257,7 @@ Index
 * G-d:                                   Acknowledgments.     (line  94)
 * G., Daniel Richard:                    Acknowledgments.     (line  60)
 * G., Daniel Richard <1>:                Maintainers.         (line  14)
+* Gardner, Ray:                          Other Versions.      (line 203)
 * Garfinkle, Scott:                      Contributors.        (line  35)
 * gawk:                                  Preface.             (line  13)
 * gawk, ARGIND variable in:              Other Arguments.     (line  21)
@@ -40041,6 +40050,7 @@ Index
                                                               (line  22)
 * waitpid() extension function:          Extension Sample Fork.
                                                               (line  18)
+* wak (awk implementation):              Other Versions.      (line 203)
 * walk_array() user-defined function:    Walking Arrays.      (line  14)
 * Wall, Larry:                           Array Intro.         (line   6)
 * Wall, Larry <1>:                       Future Extensions.   (line   6)
@@ -40688,37 +40698,37 @@ Node: Performance bugs1377765
 Node: Asking for help1380769
 Node: Maintainers1382756
 Node: Other Versions1383783
-Node: Installation summary1393387
-Node: Notes1394769
-Node: Compatibility Mode1395579
-Node: Additions1396401
-Node: Accessing The Source1397346
-Node: Adding Code1398877
-Node: New Ports1405988
-Node: Derived Files1410491
-Ref: Derived Files-Footnote-11416302
-Ref: Derived Files-Footnote-21416337
-Ref: Derived Files-Footnote-31416948
-Node: Future Extensions1417062
-Node: Implementation Limitations1417732
-Node: Extension Design1418974
-Node: Old Extension Problems1420134
-Ref: Old Extension Problems-Footnote-11421706
-Node: Extension New Mechanism Goals1421767
-Ref: Extension New Mechanism Goals-Footnote-11425237
-Node: Extension Other Design Decisions1425438
-Node: Extension Future Growth1427635
-Node: Notes summary1428255
-Node: Basic Concepts1429465
-Node: Basic High Level1430150
-Ref: figure-general-flow1430432
-Ref: figure-process-flow1431134
-Ref: Basic High Level-Footnote-11434504
-Node: Basic Data Typing1434693
-Node: Glossary1438101
-Node: Copying1470979
-Node: GNU Free Documentation License1508537
-Node: Index1533660
+Node: Installation summary1393772
+Node: Notes1395154
+Node: Compatibility Mode1395964
+Node: Additions1396786
+Node: Accessing The Source1397731
+Node: Adding Code1399262
+Node: New Ports1406373
+Node: Derived Files1410876
+Ref: Derived Files-Footnote-11416687
+Ref: Derived Files-Footnote-21416722
+Ref: Derived Files-Footnote-31417333
+Node: Future Extensions1417447
+Node: Implementation Limitations1418117
+Node: Extension Design1419359
+Node: Old Extension Problems1420519
+Ref: Old Extension Problems-Footnote-11422091
+Node: Extension New Mechanism Goals1422152
+Ref: Extension New Mechanism Goals-Footnote-11425622
+Node: Extension Other Design Decisions1425823
+Node: Extension Future Growth1428020
+Node: Notes summary1428640
+Node: Basic Concepts1429850
+Node: Basic High Level1430535
+Ref: figure-general-flow1430817
+Ref: figure-process-flow1431519
+Ref: Basic High Level-Footnote-11434889
+Node: Basic Data Typing1435078
+Node: Glossary1438486
+Node: Copying1471364
+Node: GNU Free Documentation License1508922
+Node: Index1534045
 
 End Tag Table
 
