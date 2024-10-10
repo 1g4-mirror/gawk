@@ -550,6 +550,7 @@ main(int argc, char **argv)
 		set_current_namespace(awk_namespace);
 		dump_prog(code_block);
 		dump_funcs();
+		close_prof_file();
 	}
 
 	if (do_dump_vars)
