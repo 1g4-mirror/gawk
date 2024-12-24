@@ -48,6 +48,8 @@ noinst_LIBRARIES = libsupport.a
 libsupport_a_SOURCES = \
 	attribute.h \
 	cdefs.h \
+	charset.c \
+	charset.h \
 	dfa.c \
 	dfa.h \
 	dynarray.h \

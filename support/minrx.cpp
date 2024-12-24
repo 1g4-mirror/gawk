@@ -2,20 +2,28 @@
 // MinRX: a minimal matcher for POSIX Extended Regular Expressions.
 // Copyright (C) 2023, 2024 Michael J. Haertel.
 //
-// This file is part of MinRX.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
-// MinRX is free software; you can redistribute it and/or modify it
-// under the terms of the GNU Lesser General Public License as published
-// by the Free Software Foundation; either version 3 of the License, or
-// (at your option) any later version.
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
 //
-// MinRX is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU Lesser General Public License for more details.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
 //
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS “AS IS” AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
 //
 
 #include <cctype>
@@ -36,8 +44,25 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
+#define CHARSET	1
+#ifdef CHARSET
+#include <memory>
+#include "charset.h"
+#endif
 #include "minrx.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
+#ifdef HAVE_GETTEXT_H
+#include <gettext.h>
+#define _(msgid)  gettext(msgid)
+#else /* ! HAVE_GETTEXT_H */
+#define _(msgid)  msgid
+#endif /* ! HAVE_GETTEXT_H */
+
+#define N_(msgid) msgid
 
 namespace MinRX {
 
@@ -266,6 +291,7 @@ public:
 	: nextfn(nextfns[(int) e]), bp(bp), ep(ep), cp(bp) {
 		std::memset(&mbs, 0, sizeof mbs);
 	}
+	WConv(Encoding e, const char *bp): WConv(e, bp, bp + std::strlen(bp)) { }
 	auto look() const { return wch; }
 	auto lookahead() const { return WConv(*this).nextchr().look(); }
 	WConv &nextchr() { return (this->*nextfn)(); }
@@ -353,6 +379,21 @@ public:
 WConv &(WConv::*const WConv::nextfns[3])() = { &WConv::nextbyte, &WConv::nextmbtowc, &WConv::nextutf8 };
 
 struct CSet {
+#ifdef CHARSET
+	charset_t *charset = nullptr;
+	CSet() {
+		int errcode = 0;
+		charset = charset_create(& errcode);
+		// FIXME: Throw error if charset == nullptr
+	}
+	CSet(const CSet &) = delete;
+	CSet &operator=(const CSet &) = delete;
+	CSet(CSet &&cs): charset(cs.charset) { cs.charset = nullptr; }
+	CSet &operator=(CSet &&cs) { charset = cs.charset; cs.charset = nullptr; return *this; }
+	~CSet() { if (charset) { charset_free(charset); charset = nullptr; } }
+#else
+	static std::map<std::string, CSet> cclmemo;
+	static std::mutex cclmutex;
 	struct Range {
 		Range(WChar x, WChar y): min(std::min(x, y)), max(std::max(x, y)) {}
 		WChar min, max;
@@ -367,8 +408,19 @@ struct CSet {
 			set(e.min, e.max);
 		return *this;
 	}
-	CSet &invert() { inverted = true; return *this; }
+#endif
+	CSet &invert() {
+#ifdef CHARSET
+		charset_invert(charset); // FIXME: no error checking
+#else
+		inverted = true;
+#endif
+		return *this;
+	}
 	CSet &set(WChar wclo, WChar wchi) {
+#ifdef CHARSET
+		charset_add_range(charset, wclo, wchi);	// FIXME: no error checking
+#else
 		auto e = Range(wclo - (wclo != std::numeric_limits<WChar>::min()), wchi + (wchi != std::numeric_limits<WChar>::max()));
 		auto [x, y] = ranges.equal_range(e);
 		if (x == y) {
@@ -383,16 +435,214 @@ struct CSet {
 			auto i = ranges.erase(x, y);
 			ranges.insert(i, Range(wclo, wchi));
 		}
+#endif
 		return *this;
 	}
-	CSet &set(WChar wc) { return set(wc, wc); }
+	CSet &set(WChar wc) {
+#ifdef CHARSET
+		charset_add_char(charset, wc);	// FIXME: no error checking
+		return *this;
+#else
+		return set(wc, wc);
+#endif
+	}
 	bool test(WChar wc) const {
+#ifdef CHARSET
+		return charset_in_set(charset, wc);
+#else
 		if (wc < 0)
 			return false;
 		auto i = ranges.lower_bound(Range(wc, wc));
 		return inverted ^ (i != ranges.end() && wc >= i->min && wc <= i->max);
+#endif
+	}
+	bool cclass(minrx_regcomp_flags_t flags, WConv::Encoding enc, const std::string &name) {
+#ifdef CHARSET
+		int result = charset_add_cclass(charset, name.c_str());
+		if ((flags & MINRX_REG_ICASE) != 0) {
+			if (name == "lower")
+				charset_add_cclass(charset, "upper");	// FIXME: Add error checking
+			else if (name == "upper")
+				charset_add_cclass(charset, "lower");	// FIXME: Add error checking
+		}
+		return result == CSET_SUCCESS;
+#else
+		auto wct = std::wctype(name.c_str());
+		if (wct) {
+			std::string key = name + ":" + std::setlocale(LC_CTYPE, NULL) + ":" + ((flags & MINRX_REG_ICASE) != 0 ? "1" : "0");
+			std::lock_guard<std::mutex> lock(cclmutex);
+			auto i = cclmemo.find(key);
+			if (i == cclmemo.end()) {
+				if (enc == WConv::Encoding::Byte)
+					for (WChar b = 0; b <= 0xFF; ++b) {
+						if (std::iswctype(std::btowc(b), wct)) {
+							set(b);
+							if ((flags & MINRX_REG_ICASE) != 0) {
+								set(std::tolower(b));
+								set(std::toupper(b));
+							}
+						}
+					}
+				else
+					for (WChar wc = 0; wc <= WCharMax; ++wc) {
+						if (std::iswctype(wc, wct)) {
+							set(wc);
+							if ((flags & MINRX_REG_ICASE) != 0) {
+								set(std::towlower(wc));
+								set(std::towupper(wc));
+							}
+						}
+					}
+				cclmemo.emplace(key, *this);
+				i = cclmemo.find(key);
+			}
+			*this |= i->second; // N.B. could probably be safely outside the critical section, since cclmemo entries are never deleted
+			return true;
+		}
+		return false;
+#endif
+	}
+	minrx_result_t parse(minrx_regcomp_flags_t flags, WConv::Encoding enc, WConv &wconv) {
+		auto wc = wconv.nextchr().look();
+		bool inv = wc == L'^';
+		if (inv)
+			wc = wconv.nextchr().look();
+		for (bool first = true;; first = false) {
+			auto wclo = wc, wchi = wc;
+			if (wclo == WConv::End)
+				return MINRX_REG_EBRACK;
+			wc = wconv.nextchr().look();
+			if (wclo == L']' && !first)
+				break;
+			if (wclo == L'\\' && (flags & MINRX_REG_BRACK_ESCAPE) != 0) {
+				if (wc != WConv::End) {
+					wclo = wchi = wc;
+					wc = wconv.nextchr().look();
+				} else {
+					return MINRX_REG_EESCAPE;
+				}
+			} else if (wclo == L'[') {
+				if (wc == L'.') {
+					wc = wconv.nextchr().look();
+					wclo = wchi = wc;
+#ifdef CHARSET_NOT_YET
+					int32_t coll[2] = { wc, L'\0' };
+					charset_add_collate(charset, coll);	// FIXME: No error checking
+					if ((flags & MINRX_REG_ICASE) != 0) {
+						if (std::iswlower(wc))
+							coll[0] = std::towupper(wc);
+						else if (std::iswupper(wc))
+							coll[0] = std::towlower(wc);
+						charset_add_collate(charset, coll);	// FIXME: No error checking
+					}
+#endif
+					wc = wconv.nextchr().look();
+					if (wc != L'.' || (wc = wconv.nextchr().look() != L']'))
+						return MINRX_REG_ECOLLATE;
+				} else if (wc == L':') {
+					wconv.nextchr();
+					auto bp = wconv.ptr();
+					while (wconv.look() != WConv::End && wconv.look() != L':')
+						wconv.nextchr();
+					if (wconv.look() != L':')
+						return MINRX_REG_ECTYPE;
+					auto ep = wconv.ptr();
+					wconv.nextchr();
+					if (wconv.look() != L']')
+						return MINRX_REG_ECTYPE;
+					wc = wconv.nextchr().look();
+					auto cclname = std::string(bp, ep);
+					if (cclass(flags, enc, cclname))
+						continue;
+					return MINRX_REG_ECTYPE;
+				} else if (wc == L'=') {
+#ifdef CHARSET
+					wc = wconv.nextchr().look();
+					wclo = wchi = wc;
+					charset_add_equiv(charset, wc);	// FIXME: No error checking
+					if ((flags & MINRX_REG_ICASE) != 0) {
+						if (std::iswlower(wc))
+							charset_add_equiv(charset, std::towupper(wc));	// FIXME: no error checking
+						else if (std::iswupper(wc))
+							charset_add_equiv(charset, std::towlower(wc));	// FIXME: no error checking
+					}
+					wc = wconv.nextchr().look();
+					if (wc != L'=' || (wc = wconv.nextchr().look() != L']'))
+						return MINRX_REG_ECOLLATE;
+#else
+					// FIXME: recognize some equivalence classes.
+					return MINRX_REG_ECOLLATE;
+#endif
+				}
+			}
+			bool range = false;
+			if (wc == L'-') {
+				auto save = wconv.save();
+				wc = wconv.nextchr().look();
+				if (wc == WConv::End)
+					return MINRX_REG_EBRACK;
+				if (wc != L']') {
+					wchi = wc;
+					wc = wconv.nextchr().look();
+					if (wchi == L'\\' && (flags & MINRX_REG_BRACK_ESCAPE) != 0) {
+						if (wc != WConv::End) {
+							wchi = wc;
+							wc = wconv.nextchr().look();
+						} else {
+							return MINRX_REG_EESCAPE;
+						}
+					} else if (wchi == L'[') {
+						if (wc == L'.') {
+							wchi = wconv.nextchr().look();
+							wc = wconv.nextchr().look();
+							if (wc != L'.' || (wc = wconv.nextchr().look()) != L']')
+								return MINRX_REG_ECOLLATE;
+							wc = wconv.nextchr().look();
+						} else if (wc == L':' || wc == L'=') {
+							return MINRX_REG_ERANGE; // can't be range endpoint
+						}
+					}
+					range = true;
+				} else {
+					wconv.restore(save);
+					wc = L'-';
+				}
+			}
+			if (wclo > wchi || (wclo != wchi && (wclo < 0 || wchi < 0)))
+				return MINRX_REG_ERANGE;
+			if (wclo >= 0) {
+				set(wclo, wchi);
+				if ((flags & MINRX_REG_ICASE) != 0) {
+#ifdef CHARSET
+					if (std::iswlower(wclo) && std::iswlower(wchi)) {
+						set(std::towupper(wclo), std::towupper(wchi));
+					} else if (std::iswupper(wclo) && std::iswupper(wchi)) {
+						set(std::towlower(wclo), std::towlower(wchi));
+					}
+#else
+					for (auto wc = wclo; wc <= wchi; ++wc) {
+						set(enc == WConv::Encoding::Byte ? std::tolower(wc) : std::towlower(wc));
+						set(enc == WConv::Encoding::Byte ? std::toupper(wc) : std::towupper(wc));
+					}
+#endif
+				}
+			}
+			if (range && wc == L'-' && wconv.lookahead() != L']')
+				return MINRX_REG_ERANGE;
+		}
+		if (inv) {
+			if ((flags & MINRX_REG_NEWLINE) != 0)
+				set(L'\n');
+			invert();
+		}
+		return MINRX_REG_SUCCESS;
 	}
 };
+
+#ifndef CHARSET
+std::map<std::string, CSet> CSet::cclmemo;
+std::mutex CSet::cclmutex;
+#endif
 
 typedef std::size_t NInt;
 
@@ -446,44 +696,6 @@ struct Compile {
 	std::map<WChar, unsigned int> icmap;
 	NInt nsub = 0;
 	Compile(WConv::Encoding e, const char *bp, const char *ep, minrx_regcomp_flags_t flags): flags(flags), enc(e), wconv(e, bp, ep) { wconv.nextchr(); }
-	static std::map<std::string, CSet> cclmemo;
-	static std::mutex cclmutex;
-	bool cclass(CSet &cs, const std::string &name) {
-		auto wct = std::wctype(name.c_str());
-		if (wct) {
-			std::string key = name + ":" + std::setlocale(LC_CTYPE, NULL) + ":" + ((flags & MINRX_REG_ICASE) != 0 ? "1" : "0");
-			std::lock_guard<std::mutex> lock(cclmutex);
-			auto i = cclmemo.find(key);
-			if (i == cclmemo.end()) {
-				CSet cs;
-				if (enc == WConv::Encoding::Byte)
-					for (WChar b = 0; b <= 0xFF; ++b) {
-						if (std::iswctype(std::btowc(b), wct)) {
-							cs.set(b);
-							if ((flags & MINRX_REG_ICASE) != 0) {
-								cs.set(std::tolower(b));
-								cs.set(std::toupper(b));
-							}
-						}
-					}
-				else
-					for (WChar wc = 0; wc <= WCharMax; ++wc) {
-						if (std::iswctype(wc, wct)) {
-							cs.set(wc);
-							if ((flags & MINRX_REG_ICASE) != 0) {
-								cs.set(std::towlower(wc));
-								cs.set(std::towupper(wc));
-							}
-						}
-					}
-				cclmemo.emplace(key, cs);
-				i = cclmemo.find(key);
-			}
-			cs |= i->second; // N.B. could probably be safely outside the critical section, since cclmemo entries are never deleted
-			return true;
-		}
-		return false;
-	}
 	bool num(NInt &n) {
 		auto satmul = [](NInt x, NInt y) -> NInt {
 			return (x == 0 || y == 0) ? 0 : ((x * y / x == y) ? x * y : -1);
@@ -725,109 +937,10 @@ struct Compile {
 		case L'?':
 			return {{}, 0, MINRX_REG_BADRPT};
 		case L'[':
-			{
-				lhmaxstk = nstk;
-				wc = wconv.nextchr().look();
-				bool invert = wc == L'^';
-				if (invert)
-					wc = wconv.nextchr().look();
-				CSet cs;
-				for (bool first = true;; first = false) {
-					auto wclo = wc, wchi = wc;
-					if (wclo == WConv::End)
-						return {{}, 0, MINRX_REG_EBRACK};
-					wc = wconv.nextchr().look();
-					if (wclo == L']' && !first)
-						break;
-					if (wclo == L'\\' && (flags & MINRX_REG_BRACK_ESCAPE) != 0) {
-						if (wc != WConv::End) {
-							wclo = wchi = wc;
-							wc = wconv.nextchr().look();
-						} else {
-							return {{}, 0, MINRX_REG_EESCAPE};
-						}
-					} else if (wclo == L'[') {
-						if (wc == L'.') {
-							wc = wconv.nextchr().look();
-							wclo = wchi = wc;
-							wc = wconv.nextchr().look();
-							if (wc != L'.' || (wc = wconv.nextchr().look() != L']'))
-								return {{}, 0, MINRX_REG_ECOLLATE};
-						} else if (wc == L':') {
-							wconv.nextchr();
-							auto bp = wconv.ptr();
-							while (wconv.look() != WConv::End && wconv.look() != L':')
-								wconv.nextchr();
-							if (wconv.look() != L':')
-								return {{}, 0, MINRX_REG_ECTYPE};
-							auto ep = wconv.ptr();
-							wconv.nextchr();
-							if (wconv.look() != L']')
-								return {{}, 0, MINRX_REG_ECTYPE};
-							wc = wconv.nextchr().look();
-							auto cclname = std::string(bp, ep);
-							if (cclass(cs, cclname))
-								continue;
-							return {{}, 0, MINRX_REG_ECTYPE};
-						} else if (wc == L'=') {
-							// FIXME: recognize some equivalence classes.
-							return {{}, 0, MINRX_REG_ECOLLATE};
-						}
-					}
-					bool range = false;
-					if (wc == L'-') {
-						auto save = wconv.save();
-						wc = wconv.nextchr().look();
-						if (wc == WConv::End)
-							return {{}, 0, MINRX_REG_EBRACK};
-						if (wc != L']') {
-							wchi = wc;
-							wc = wconv.nextchr().look();
-							if (wchi == L'\\' && (flags & MINRX_REG_BRACK_ESCAPE) != 0) {
-								if (wc != WConv::End) {
-									wchi = wc;
-									wc = wconv.nextchr().look();
-								} else {
-									return {{}, 0, MINRX_REG_EESCAPE};
-								}
-							} else if (wchi == L'[') {
-								if (wc == L'.') {
-									wchi = wconv.nextchr().look();
-									wc = wconv.nextchr().look();
-									if (wc != L'.' || (wc = wconv.nextchr().look()) != L']')
-										return {{}, 0, MINRX_REG_ECOLLATE};
-									wc = wconv.nextchr().look();
-								} else if (wc == L':' || wc == L'=') {
-									return {{}, 0, MINRX_REG_ERANGE}; // can't be range endpoint
-								}
-							}
-							range = true;
-						} else {
-							wconv.restore(save);
-							wc = L'-';
-						}
-					}
-					if (wclo > wchi || (wclo != wchi && (wclo < 0 || wchi < 0)))
-						return {{}, 0, MINRX_REG_ERANGE};
-					if (wclo >= 0) {
-						cs.set(wclo, wchi);
-						if ((flags & MINRX_REG_ICASE) != 0)
-							for (auto wc = wclo; wc <= wchi; ++wc) {
-								cs.set(enc == WConv::Encoding::Byte ? std::tolower(wc) : std::towlower(wc));
-								cs.set(enc == WConv::Encoding::Byte ? std::toupper(wc) : std::towupper(wc));
-							}
-					}
-					if (range && wc == L'-' && wconv.lookahead() != L']')
-						return {{}, 0, MINRX_REG_ERANGE};
-				}
-				lhs.push_back({Node::CSet, {csets.size(), 0}, nstk});
-				if (invert) {
-					if ((flags & MINRX_REG_NEWLINE) != 0)
-						cs.set(L'\n');
-					cs.invert();
-				}
-				csets.emplace_back(cs);
-			}
+			lhmaxstk = nstk;
+			lhs.push_back({Node::CSet, {csets.size(), 0}, nstk});
+			if (auto err = csets.emplace_back().parse(flags, enc, wconv))
+				return {{}, 0, err};
 			break;
 		case L'.':
 			if (!dot.has_value()) {
@@ -890,8 +1003,8 @@ struct Compile {
 					goto normal;
 				if (!esc_s.has_value()) {
 					esc_s = csets.size();
-					csets.emplace_back();
-					cclass(csets.back(), "space");
+					WConv wc(enc, "[[:space:]]");
+					csets.emplace_back().parse(flags, enc, wc.nextchr());
 				}
 				lhs.push_back({Node::CSet, {*esc_s, 0}, nstk});
 				break;
@@ -900,9 +1013,8 @@ struct Compile {
 					goto normal;
 				if (!esc_S.has_value()) {
 					esc_S = csets.size();
-					csets.emplace_back();
-					cclass(csets.back(), "space");
-					csets.back().invert();
+					WConv wc(enc, "[^[:space:]]");
+					csets.emplace_back().parse(flags, enc, wc.nextchr());
 				}
 				lhs.push_back({Node::CSet, {*esc_S, 0}, nstk});
 				break;
@@ -911,9 +1023,8 @@ struct Compile {
 					goto normal;
 				if (!esc_w.has_value()) {
 					esc_w = csets.size();
-					csets.emplace_back();
-					cclass(csets.back(), "alnum");
-					csets.back().set(L'_');
+					WConv wc(enc, "[[:alnum:]_]");
+					csets.emplace_back().parse(flags, enc, wc.nextchr());
 				}
 				lhs.push_back({Node::CSet, {*esc_w, 0}, nstk});
 				break;
@@ -922,10 +1033,8 @@ struct Compile {
 					goto normal;
 				if (!esc_W.has_value()) {
 					esc_W = csets.size();
-					csets.emplace_back();
-					cclass(csets.back(), "alnum");
-					csets.back().set(L'_');
-					csets.back().invert();
+					WConv wc(enc, "[^[:alnum:]_]");
+					csets.emplace_back().parse(flags, enc, wc.nextchr());
 				}
 				lhs.push_back({Node::CSet, {*esc_W, 0}, nstk});
 				break;
@@ -975,9 +1084,6 @@ struct Compile {
 		return new Regexp{ std::move(csets), {lhs.begin(), lhs.end()}, nstk, nsub + 1, enc, err };
 	}
 };
-
-std::map<std::string, CSet> Compile::cclmemo;
-std::mutex Compile::cclmutex;
 
 struct Execute {
 	typedef COWVec<std::size_t, (std::size_t) -1> Vec;
@@ -1281,25 +1387,25 @@ size_t
 minrx_regerror(int errcode, const minrx_regex_t *, char *errbuf, size_t errsize)
 {
 	static const char *const messages[] = {
-		"success",
-		"bad pattern",
-		"invalid contents of {}",
-		"? * + or {interval} not preceded by valid subpattern",
-		"unbalanced {",
-		"unbalanced [",
-		"invalid collating element",
-		"invalid character class name",
-		"invalid trailing backslash",
-		"unbalanced (",
-		"invalid range endpoint",
-		"memory allocation failed",
-		"invalid \\digit",
-		"match not found",
-		"unknown error code",
+		N_("success"),
+		N_("bad pattern"),
+		N_("invalid contents of {}"),
+		N_("? * + or {interval} not preceded by valid subpattern"),
+		N_("unbalanced {"),
+		N_("unbalanced ["),
+		N_("invalid collating element"),
+		N_("invalid character class name"),
+		N_("invalid trailing backslash"),
+		N_("unbalanced ("),
+		N_("invalid range endpoint"),
+		N_("memory allocation failed"),
+		N_("invalid \\digit"),
+		N_("match not found"),
+		N_("unknown error code"),
 	};
 	if (errcode < 0 || errcode > MINRX_REG_UNKNOWN)
 		errcode = MINRX_REG_UNKNOWN;
-	size_t size = snprintf(errbuf, errsize, "%s", messages[errcode]);
+	size_t size = snprintf(errbuf, errsize, "%s", _(messages[errcode]));
 	if (errsize != 0 && size == errsize)
 		errbuf[errsize - 1] = '\0';
 	return size + 1;

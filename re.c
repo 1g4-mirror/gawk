@@ -266,7 +266,7 @@ make_regexp(const char *s, size_t len, bool ignorecase, bool dfa, bool canfatal)
 
 	if (use_gnu_matchers) {
 		rp->pat.allocated = 0;	/* regex will allocate the buffer */
-		emalloc(rp->pat.fastmap, char *, 256, "make_regexp");
+		emalloc(rp->pat.fastmap, char *, 256);
 
 		/*
 		 * Lo these many years ago, had I known what a P.I.T.A. IGNORECASE
@@ -352,7 +352,7 @@ make_regexp(const char *s, size_t len, bool ignorecase, bool dfa, bool canfatal)
 		// Allocate re_nsub + 1, since 0 is the whole thing and 1-N
 		// are for actual parenthesized subexpressions.
 		emalloc(rp->mre_regs, minrx_regmatch_t *,
-			(rp->mre_pat.re_nsub + 1) * sizeof(minrx_regmatch_t), "make_regexp");
+			(rp->mre_pat.re_nsub + 1) * sizeof(minrx_regmatch_t));
 	}
 
 	/* Additional flags that help with RS as regexp. */
@@ -501,12 +501,12 @@ get_minrx_regerror(int errcode, Regexp *rp)
 
 	if (buf == NULL) {	// first time through, allocate the buffer
 		bufsize = 100;
-		emalloc(buf, char *, bufsize, "get_minrx_regerror");
+		emalloc(buf, char *, bufsize);
 	}
 
 	while ((count = minrx_regerror(errcode, & rp->mre_pat, buf, bufsize)) > bufsize) {
 		bufsize *= 2;
-		erealloc(buf, char *, bufsize, "get_minrx_regerror");
+		erealloc(buf, char *, bufsize);
 	}
 
 	return buf;
