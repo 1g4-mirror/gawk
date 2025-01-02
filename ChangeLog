@@ -1,3 +1,7 @@
+2025-01-02         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* NEWS: Updated. Copyright year updated, too.
+
 2024-12-24         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* re.c: Finish the emalloc / erealloc changes.

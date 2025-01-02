@@ -31420,6 +31420,8 @@ unfortunately.  It added the following features:
 
    • The ‘\u’ escape sequence (*note Escape Sequences::).
 
+   • Support for OpenVMS 9.2-2 x86_64 (at version 5.3.1).
+
    • The need for GNU ‘libsigsegv’ was removed from ‘gawk’.  The
      value-add was never very much and it caused problems in some
      environments.
@@ -36592,7 +36594,7 @@ Index
 * @ (at-sign), @nsinclude directive:     Include Files.       (line 100)
 * @ (at-sign), @nsinclude directive <1>: Inclusion For Namespaces.
                                                               (line   6)
-* @ (at-sign), @nsinclude directive <2>: Feature History.     (line 541)
+* @ (at-sign), @nsinclude directive <2>: Feature History.     (line 543)
 * * (asterisk), * operator, as multiplication operator: Precedence.
                                                               (line  54)
 * * (asterisk), * operator, as regexp operator: Regexp Operator Details.
@@ -36941,7 +36943,7 @@ Index
 * at-sign (@), @nsinclude directive:     Include Files.       (line 100)
 * at-sign (@), @nsinclude directive <1>: Inclusion For Namespaces.
                                                               (line   6)
-* at-sign (@), @nsinclude directive <2>: Feature History.     (line 541)
+* at-sign (@), @nsinclude directive <2>: Feature History.     (line 543)
 * atan2:                                 Numeric Functions.   (line  11)
 * automatic displays, in debugger:       Debugger Info.       (line  24)
 * awf (amazingly workable formatter) program: Glossary.       (line  23)
@@ -38142,7 +38144,7 @@ Index
 * file inclusion, @nsinclude directive:  Include Files.       (line 100)
 * file inclusion, @nsinclude directive <1>: Inclusion For Namespaces.
                                                               (line   6)
-* file inclusion, @nsinclude directive <2>: Feature History.  (line 541)
+* file inclusion, @nsinclude directive <2>: Feature History.  (line 543)
 * file names, assignments as:            Ignoring Assigns.    (line   6)
 * file names, distinguishing:            Auto-set.            (line  55)
 * file names, in compatibility mode:     Special Caveats.     (line   9)
@@ -38615,7 +38617,7 @@ Index
 * including files, @nsinclude directive: Include Files.       (line 100)
 * including files, @nsinclude directive <1>: Inclusion For Namespaces.
                                                               (line   6)
-* including files, @nsinclude directive <2>: Feature History. (line 541)
+* including files, @nsinclude directive <2>: Feature History. (line 543)
 * increment operators:                   Increment Ops.       (line   6)
 * index:                                 String Functions.    (line 174)
 * indexing arrays:                       Array Intro.         (line  51)
@@ -39000,7 +39002,7 @@ Index
 * @nsinclude directive:                  Include Files.       (line 100)
 * @nsinclude directive <1>:              Inclusion For Namespaces.
                                                               (line   6)
-* @nsinclude directive <2>:              Feature History.     (line 541)
+* @nsinclude directive <2>:              Feature History.     (line 543)
 * null strings:                          awk split records.   (line 108)
 * null strings <1>:                      Regexp Field Splitting.
                                                               (line  42)
@@ -40729,79 +40731,79 @@ Node: BTL1285093
 Node: POSIX/GNU1285860
 Ref: Gawk Extension Functions1289250
 Node: Feature History1292674
-Node: Common Extensions1312706
-Node: Ranges and Locales1314181
-Ref: Ranges and Locales-Footnote-11318966
-Ref: Ranges and Locales-Footnote-21318993
-Ref: Ranges and Locales-Footnote-31319228
-Node: Contributors1319451
-Node: History summary1325803
-Node: Installation1327245
-Node: Gawk Distribution1328209
-Node: Getting1328701
-Node: Extracting1329700
-Node: Distribution contents1331406
-Node: Unix Installation1339296
-Node: Quick Installation1340116
-Node: Compiling with MPFR1342656
-Node: Shell Startup Files1343362
-Node: Additional Configuration Options1344519
-Node: Configuration Philosophy1346902
-Node: Compiling from Git1349402
-Node: Building the Documentation1349961
-Node: Non-Unix Installation1351373
-Node: PC Installation1351849
-Node: PC Binary Installation1352718
-Node: PC Compiling1353611
-Node: PC Using1354789
-Node: Cygwin1358505
-Node: MSYS1359757
-Node: OpenVMS Installation1360383
-Node: OpenVMS Compilation1361064
-Ref: OpenVMS Compilation-Footnote-11362547
-Node: OpenVMS Dynamic Extensions1362605
-Node: OpenVMS Installation Details1364241
-Node: OpenVMS Running1366672
-Node: OpenVMS GNV1370809
-Node: Bugs1371564
-Node: Bug definition1372484
-Node: Bug address1376085
-Node: Usenet1379654
-Node: Performance bugs1380867
-Node: Asking for help1383871
-Node: Maintainers1385858
-Node: Other Versions1386885
-Node: Installation summary1396874
-Node: Notes1398256
-Node: Compatibility Mode1399066
-Node: Additions1399888
-Node: Accessing The Source1400833
-Node: Adding Code1402364
-Node: New Ports1409475
-Node: Derived Files1413978
-Ref: Derived Files-Footnote-11419789
-Ref: Derived Files-Footnote-21419824
-Ref: Derived Files-Footnote-31420435
-Node: Future Extensions1420549
-Node: Implementation Limitations1421219
-Node: Extension Design1422461
-Node: Old Extension Problems1423621
-Ref: Old Extension Problems-Footnote-11425193
-Node: Extension New Mechanism Goals1425254
-Ref: Extension New Mechanism Goals-Footnote-11428724
-Node: Extension Other Design Decisions1428925
-Node: Extension Future Growth1431122
-Node: Notes summary1431742
-Node: Basic Concepts1432952
-Node: Basic High Level1433637
-Ref: figure-general-flow1433919
-Ref: figure-process-flow1434621
-Ref: Basic High Level-Footnote-11437991
-Node: Basic Data Typing1438180
-Node: Glossary1441588
-Node: Copying1474466
-Node: GNU Free Documentation License1512024
-Node: Index1537147
+Node: Common Extensions1312767
+Node: Ranges and Locales1314242
+Ref: Ranges and Locales-Footnote-11319027
+Ref: Ranges and Locales-Footnote-21319054
+Ref: Ranges and Locales-Footnote-31319289
+Node: Contributors1319512
+Node: History summary1325864
+Node: Installation1327306
+Node: Gawk Distribution1328270
+Node: Getting1328762
+Node: Extracting1329761
+Node: Distribution contents1331467
+Node: Unix Installation1339357
+Node: Quick Installation1340177
+Node: Compiling with MPFR1342717
+Node: Shell Startup Files1343423
+Node: Additional Configuration Options1344580
+Node: Configuration Philosophy1346963
+Node: Compiling from Git1349463
+Node: Building the Documentation1350022
+Node: Non-Unix Installation1351434
+Node: PC Installation1351910
+Node: PC Binary Installation1352779
+Node: PC Compiling1353672
+Node: PC Using1354850
+Node: Cygwin1358566
+Node: MSYS1359818
+Node: OpenVMS Installation1360444
+Node: OpenVMS Compilation1361125
+Ref: OpenVMS Compilation-Footnote-11362608
+Node: OpenVMS Dynamic Extensions1362666
+Node: OpenVMS Installation Details1364302
+Node: OpenVMS Running1366733
+Node: OpenVMS GNV1370870
+Node: Bugs1371625
+Node: Bug definition1372545
+Node: Bug address1376146
+Node: Usenet1379715
+Node: Performance bugs1380928
+Node: Asking for help1383932
+Node: Maintainers1385919
+Node: Other Versions1386946
+Node: Installation summary1396935
+Node: Notes1398317
+Node: Compatibility Mode1399127
+Node: Additions1399949
+Node: Accessing The Source1400894
+Node: Adding Code1402425
+Node: New Ports1409536
+Node: Derived Files1414039
+Ref: Derived Files-Footnote-11419850
+Ref: Derived Files-Footnote-21419885
+Ref: Derived Files-Footnote-31420496
+Node: Future Extensions1420610
+Node: Implementation Limitations1421280
+Node: Extension Design1422522
+Node: Old Extension Problems1423682
+Ref: Old Extension Problems-Footnote-11425254
+Node: Extension New Mechanism Goals1425315
+Ref: Extension New Mechanism Goals-Footnote-11428785
+Node: Extension Other Design Decisions1428986
+Node: Extension Future Growth1431183
+Node: Notes summary1431803
+Node: Basic Concepts1433013
+Node: Basic High Level1433698
+Ref: figure-general-flow1433980
+Ref: figure-process-flow1434682
+Ref: Basic High Level-Footnote-11438052
+Node: Basic Data Typing1438241
+Node: Glossary1441649
+Node: Copying1474527
+Node: GNU Free Documentation License1512085
+Node: Index1537208
 
 End Tag Table
 
