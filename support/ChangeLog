@@ -1,5 +1,9 @@
 2025-01-13         Arnold D. Robbins     <arnold@skeeve.com>
 
+	* minrx.cpp: Update to current, fastest version.
+
+2025-01-13         Arnold D. Robbins     <arnold@skeeve.com>
+
 	* roaring.h, roaring.c: New files.
 	* Makefile.am (libsupport_a_SOURCES): Add roaring.h and roaring.c.
 
