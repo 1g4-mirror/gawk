@@ -70,6 +70,8 @@ libsupport_a_SOURCES = \
 	random.h \
 	regex.c \
 	regex.h \
+	roaring.c \
+	roaring.h \
 	verify.h \
 	xalloc.h \
 	malloc/dynarray.h \
