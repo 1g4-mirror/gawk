@@ -540,6 +540,24 @@ struct CSet {
 		return false;
 #endif
 	}
+#ifndef CHARSET
+	void add_equiv(int32_t equiv) {
+		wchar_t wcs_in[2];
+		wchar_t wcs[2];
+		wchar_t abuf[100], wbuf[100];
+
+		wcs_in[0] = equiv;
+		wcs_in[1] = 0;
+		wcsxfrm(abuf, wcs_in, 99);
+		wcs[1] = 0;
+		for (wchar_t u = 1; u <= WCharMax; ++u) {
+			wcs[0] = u;
+			wcsxfrm(wbuf, wcs, 99);
+			if (abuf[0] == wbuf[0])
+				set(u);
+		}
+	}
+#endif
 	minrx_result_t parse(minrx_regcomp_flags_t flags, WConv::Encoding enc, WConv &wconv) {
 		auto wc = wconv.nextchr().look();
 		bool inv = wc == L'^';
@@ -594,9 +612,9 @@ struct CSet {
 						continue;
 					return MINRX_REG_ECTYPE;
 				} else if (wc == L'=') {
-#ifdef CHARSET
 					wc = wconv.nextchr().look();
 					wclo = wchi = wc;
+#ifdef CHARSET
 					charset_add_equiv(charset, wc);	// FIXME: No error checking
 					if ((flags & MINRX_REG_ICASE) != 0) {
 						if (std::iswlower(wc))
@@ -604,13 +622,18 @@ struct CSet {
 						else if (std::iswupper(wc))
 							charset_add_equiv(charset, std::towlower(wc));	// FIXME: no error checking
 					}
+#else // both ROARING as well as original CSet
+					add_equiv(wc);
+					if ((flags & MINRX_REG_ICASE) != 0) {
+						if (std::iswlower(wc))
+							add_equiv(std::towupper(wc));
+						else if (std::iswupper(wc))
+							add_equiv(std::towlower(wc));
+					}
+#endif
 					wc = wconv.nextchr().look();
 					if (wc != L'=' || (wc = wconv.nextchr().look() != L']'))
 						return MINRX_REG_ECOLLATE;
-#else // both ROARING as well as original CSet
-					// FIXME: recognize some equivalence classes.
-					return MINRX_REG_ECOLLATE;
-#endif
 				}
 			}
 			bool range = false;
@@ -651,18 +674,10 @@ struct CSet {
 			if (wclo >= 0) {
 				set(wclo, wchi);
 				if ((flags & MINRX_REG_ICASE) != 0) {
-#ifdef CHARSET
-					if (std::iswlower(wclo) && std::iswlower(wchi)) {
-						set(std::towupper(wclo), std::towupper(wchi));
-					} else if (std::iswupper(wclo) && std::iswupper(wchi)) {
-						set(std::towlower(wclo), std::towlower(wchi));
-					}
-#else
 					for (auto wc = wclo; wc <= wchi; ++wc) {
 						set(enc == WConv::Encoding::Byte ? std::tolower(wc) : std::towlower(wc));
 						set(enc == WConv::Encoding::Byte ? std::toupper(wc) : std::towupper(wc));
 					}
-#endif
 				}
 			}
 			if (range && wc == L'-' && wconv.lookahead() != L']')
@@ -674,6 +689,71 @@ struct CSet {
 			invert();
 		}
 		return MINRX_REG_SUCCESS;
+	}
+	static unsigned int utfprefix(WChar wc) {
+		if (wc < 0x80)
+			return wc;
+		if (wc < 0x800)
+			return 0xC0 + (wc >> 6);
+		if (wc < 0x10000)
+			return 0xE0 + (wc >> 12);
+		if (wc < 0x100000)
+			return 0xF0 + (wc >> 18);
+		return 0xF4;
+	}
+	std::pair<std::optional<const std::array<bool, 256>>, std::optional<char>>
+	firstbytes(WConv::Encoding e) const {
+		std::array<bool, 256> fb = {};
+#ifdef ROARING
+		roaring_uint32_iterator_t *i;
+#endif
+		auto firstunique = [](const std::array<bool, 256> &fb) -> std::optional<char> {
+			int n = 0, u = -1;
+			for (int i = 0; i < 256; ++i)
+				if (fb[i])
+					++n, u = i;
+			return n == 1 ? std::optional<char>(u) : std::optional<char>();
+		};
+		switch (e) {
+		case WConv::Encoding::Byte:
+#ifdef ROARING
+			i = roaring_iterator_create(bitmap);
+			while (i->has_value) {
+				if (i->current_value > 255)
+					break;
+				fb[i->current_value] = true;
+				roaring_uint32_iterator_advance(i);
+			}
+			roaring_uint32_iterator_free(i);
+#else
+			for (const auto &r : ranges) {
+				if (r.min > 255)
+					break;
+				auto lo = r.min, hi = std::min(255, r.max);
+				for (auto b = lo; b <= hi; b++)
+					fb[b] = true;
+			}
+#endif
+			return {fb, firstunique(fb)};
+		case WConv::Encoding::UTF8:
+#ifdef ROARING
+			i = roaring_iterator_create(bitmap);
+			while (i->has_value) {
+				fb[utfprefix(i->current_value)] = true;
+				roaring_uint32_iterator_advance(i);
+			}
+			roaring_uint32_iterator_free(i);
+#else
+			for (const auto &r : ranges) {
+				auto lo = utfprefix(r.min), hi = utfprefix(r.max);
+				for (auto b = lo; b <= hi; b++)
+					fb[b] = true;
+			}
+#endif
+			return {fb, firstunique(fb)};
+		default:
+			return {{}, {}};
+		}
 	}
 };
 
@@ -1163,72 +1243,11 @@ struct Compile {
 		}
 		return cs;
 	}
-	static unsigned int utfprefix(WChar wc) {
-		if (wc < 0x80)
-			return wc;
-		if (wc < 0x800)
-			return 0xC0 + (wc >> 6);
-		if (wc < 0x10000)
-			return 0xE0 + (wc >> 12);
-		if (wc < 0x100000)
-			return 0xF0 + (wc >> 18);
-		return 0xF4;
-	}
 	std::pair<std::optional<const std::array<bool, 256>>, std::optional<char>>
 	firstbytes(WConv::Encoding e, const std::optional<CSet>& firstcset) {
 		if (!firstcset.has_value())
 			return {};
-		std::array<bool, 256> fb = {};
-#ifdef ROARING
-		roaring_uint32_iterator_t *i;
-#endif
-		auto firstunique = [](const std::array<bool, 256> &fb) -> std::optional<char> {
-			int n = 0, u = -1;
-			for (int i = 0; i < 256; ++i)
-				if (fb[i])
-					++n, u = i;
-			return n == 1 ? std::optional<char>(u) : std::optional<char>();
-		};
-		switch (e) {
-		case WConv::Encoding::Byte:
-#ifdef ROARING
-			i = roaring_iterator_create(firstcset->bitmap);
-			while (i->has_value) {
-				if (i->current_value > 255)
-					break;
-				fb[i->current_value] = true;
-				roaring_uint32_iterator_advance(i);
-			}
-			roaring_uint32_iterator_free(i);
-#else
-			for (const auto &r : firstcset->ranges) {
-				if (r.min > 255)
-					break;
-				auto lo = r.min, hi = std::min(255, r.max);
-				for (auto b = lo; b <= hi; b++)
-					fb[b] = true;
-			}
-#endif
-			return {fb, firstunique(fb)};
-		case WConv::Encoding::UTF8:
-#ifdef ROARING
-			i = roaring_iterator_create(firstcset->bitmap);
-			while (i->has_value) {
-				fb[utfprefix(i->current_value)] = true;
-				roaring_uint32_iterator_advance(i);
-			}
-			roaring_uint32_iterator_free(i);
-#else
-			for (const auto &r : firstcset->ranges) {
-				auto lo = utfprefix(r.min), hi = utfprefix(r.max);
-				for (auto b = lo; b <= hi; b++)
-					fb[b] = true;
-			}
-#endif
-			return {fb, firstunique(fb)};
-		default:
-			return {{}, {}};
-		}
+		return firstcset->firstbytes(e);
 	}
 	Regexp *compile() {
 		auto [lhs, nstk, err] = alt(false, 0);
@@ -1261,25 +1280,29 @@ struct Execute {
 	const Regexp &r;
 	const minrx_regexec_flags_t flags;
 	WConv wconv;
-	WChar lookback = WConv::End;
+	WChar wcprev = WConv::End;
 	Vec::Allocator allocator { r.nstk + 2 * r.nsub };
 	std::optional<COWVec<std::size_t, (std::size_t) -1>> best;
 	QSet<NInt> epsq { r.nodes.size() };
 	QVec<NInt, NState> epsv { r.nodes.size() };
+	const Node *nodes = r.nodes.data();
 	Execute(const Regexp &r, minrx_regexec_flags_t flags, const char *bp, const char *ep) : r(r), flags(flags), wconv(r.enc, bp, ep) {}
-	void add(QVec<NInt, NState> &ncsv, NInt n, const NState &ns) {
-		if (r.nodes[n].type <= Node::CSet) {
-			auto [newly, oldns] = ncsv.insert(n, ns);
-			if (!newly && ns.cmpgt(oldns, r.nodes[n].nstk))
-				oldns = ns;
+	void add(QVec<NInt, NState> &ncsv, NInt k, const NState &ns, WChar wcnext) {
+		const Node &n = nodes[k];
+		if (n.type <= Node::CSet) {
+			if (n.type == (NInt) wcnext || (n.type == Node::CSet && r.csets[n.args[0]].test(wcnext))) {
+				auto [newly, oldns] = ncsv.insert(k, ns);
+				if (!newly && ns.cmpgt(oldns, n.nstk))
+					oldns = ns;
+			}
 		} else {
-			auto [newly, oldns] = epsv.insert(n, ns);
-			if (newly || (ns.cmpgt(oldns, r.nodes[n].nstk) && (oldns = ns, true)))
-				epsq.insert(n);
+			auto [newly, oldns] = epsv.insert(k, ns);
+			if (newly || (ns.cmpgt(oldns, n.nstk) && (oldns = ns, true)))
+				epsq.insert(k);
 		}
 	}
-	void epsclosure(QVec<NInt, NState> &ncsv) {
-		auto nodes = r.nodes;
+	void epsclosure(QVec<NInt, NState> &ncsv, WChar wcnext) {
+		auto nodes = this->nodes;
 		auto is_word = r.enc == WConv::Encoding::Byte ? [](WChar b) { return b == '_' || std::isalnum(b); }
 							      : [](WChar wc) { return wc == L'_' || std::iswalnum(wc); };
 		do {
@@ -1309,20 +1332,20 @@ struct Execute {
 					NInt priority = 0;
 					do {
 						nscopy.substack.put(n.nstk, priority += pridelta);
-						add(ncsv, k + 1, nscopy);
+						add(ncsv, k + 1, nscopy, wcnext);
 						k = k + 1 + nodes[k].args[1];
 					} while (nodes[k].type != Node::Join);
 					if (priority == pridelta) {
 						nscopy.substack.put(n.nstk, priority += pridelta);
-						add(ncsv, k, nscopy);
+						add(ncsv, k, nscopy, wcnext);
 					}
 				}
 				break;
 			case Node::Goto:
-				add(ncsv, k + 1 + n.args[1], ns);
+				add(ncsv, k + 1 + n.args[1], ns, wcnext);
 				break;
 			case Node::Join:
-				add(ncsv, k + 1, ns);
+				add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::Loop:
 				{
@@ -1330,21 +1353,21 @@ struct Execute {
 					nscopy.substack.put(n.nstk, wconv.off());
 					nscopy.substack.put(n.nstk + 1, -1);
 					nscopy.substack.put(n.nstk + 2, wconv.off());
-					add(ncsv, k + 1, nscopy);
+					add(ncsv, k + 1, nscopy, wcnext);
 					if (n.args[1]) {
 						nscopy.substack.put(n.nstk + 1, 0);
-						add(ncsv, k + 1 + n.args[0], nscopy);
+						add(ncsv, k + 1 + n.args[0], nscopy, wcnext);
 					}
 				}
 				break;
 			case Node::Next:
 				{
-					add(ncsv, k + 1, ns);
+					add(ncsv, k + 1, ns, wcnext);
 					if (n.args[1] && wconv.off() > ns.substack.get(n.nstk - 1)) {
 						NState nscopy = ns;
 						nscopy.substack.sub(n.nstk - 2, 1);
 						nscopy.substack.put(n.nstk - 1, wconv.off());
-						add(ncsv, k - n.args[0], nscopy);
+						add(ncsv, k - n.args[0], nscopy, wcnext);
 					}
 				}
 				break;
@@ -1357,7 +1380,7 @@ struct Execute {
 							nscopy.substack.put(r.nstk + i * 2, -1);
 							nscopy.substack.put(r.nstk + i * 2 + 1, -1);
 						}
-					add(ncsv, k + 1, nscopy);
+					add(ncsv, k + 1, nscopy, wcnext);
 				}
 				break;
 			case Node::SubR:
@@ -1365,46 +1388,46 @@ struct Execute {
 					NState nscopy = ns;
 					nscopy.substack.put(r.nstk + n.args[0] * 2 + 0, ns.substack.get(n.nstk - 1));
 					nscopy.substack.put(r.nstk + n.args[0] * 2 + 1, wconv.off());
-					add(ncsv, k + 1, nscopy);
+					add(ncsv, k + 1, nscopy, wcnext);
 				} else {
-					add(ncsv, k + 1, ns);
+					add(ncsv, k + 1, ns, wcnext);
 				}
 				break;
 			case Node::ZBOB:
 				if (wconv.off() == 0 && (flags & MINRX_REG_NOTBOL) == 0)
-					add(ncsv, k + 1, ns);
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::ZEOB:
 				if (wconv.look() == WConv::End && (flags & MINRX_REG_NOTEOL) == 0)
-					add(ncsv, k + 1, ns);
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::ZBOL:
-				if (((wconv.off() == 0 && (flags & MINRX_REG_NOTBOL) == 0)) || lookback == L'\n')
-					add(ncsv, k + 1, ns);
+				if (((wconv.off() == 0 && (flags & MINRX_REG_NOTBOL) == 0)) || wcprev == L'\n')
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::ZEOL:
 				if (((wconv.look() == WConv::End && (flags & MINRX_REG_NOTEOL) == 0)) || wconv.look() == L'\n')
-					add(ncsv, k + 1, ns);
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::ZBOW:
-				if ((wconv.off() == 0 || !is_word(lookback)) && (wconv.look() != WConv::End && is_word(wconv.look())))
-					add(ncsv, k + 1, ns);
+				if ((wconv.off() == 0 || !is_word(wcprev)) && (wconv.look() != WConv::End && is_word(wconv.look())))
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::ZEOW:
-				if ((wconv.off() != 0 && is_word(lookback)) && (wconv.look() == WConv::End || !is_word(wconv.look())))
-					add(ncsv, k + 1, ns);
+				if ((wconv.off() != 0 && is_word(wcprev)) && (wconv.look() == WConv::End || !is_word(wconv.look())))
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::ZXOW:
-				if (   ((wconv.off() == 0 || !is_word(lookback)) && (wconv.look() != WConv::End && is_word(wconv.look())))
-				    || ((wconv.off() != 0 && is_word(lookback)) && (wconv.look() == WConv::End || !is_word(wconv.look()))))
-					add(ncsv, k + 1, ns);
+				if (   ((wconv.off() == 0 || !is_word(wcprev)) && (wconv.look() != WConv::End && is_word(wconv.look())))
+				    || ((wconv.off() != 0 && is_word(wcprev)) && (wconv.look() == WConv::End || !is_word(wconv.look()))))
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			case Node::ZNWB:
 				if (   (wconv.off() == 0 && wconv.look() == WConv::End)
 				    || (wconv.off() == 0 && wconv.look() != WConv::End && !is_word(wconv.look()))
-				    || (wconv.off() != 0 && !is_word(lookback) && wconv.look() == WConv::End)
-				    || (wconv.off() != 0 && wconv.look() != WConv::End && is_word(lookback) == is_word(wconv.look())))
-					add(ncsv, k + 1, ns);
+				    || (wconv.off() != 0 && !is_word(wcprev) && wconv.look() == WConv::End)
+				    || (wconv.off() != 0 && wconv.look() != WConv::End && is_word(wcprev) == is_word(wconv.look())))
+					add(ncsv, k + 1, ns, wcnext);
 				break;
 			default:
 				abort();
@@ -1414,13 +1437,12 @@ struct Execute {
 	}
 	int execute(std::size_t nm, minrx_regmatch_t *rm) {
 		QVec<NInt, NState> mcsvs[2] { r.nodes.size(), r.nodes.size() };
-		auto nodes = &r.nodes[0];
 		wconv.nextchr();
 		if ((flags & MINRX_REG_RESUME) != 0 && rm && rm[0].rm_eo > 0)
 			while (wconv.look() != WConv::End && (std::ptrdiff_t) wconv.off() < rm[0].rm_eo)
-				lookback = wconv.look(), wconv.nextchr();
+				wcprev = wconv.look(), wconv.nextchr();
 		NState nsinit(allocator);
-		auto wc = wconv.look();
+		auto wcnext = wconv.look();
 		if (r.firstcset.has_value()) {
 		zoom:
 			if (r.firstbytes.has_value()) {
@@ -1446,73 +1468,55 @@ struct Execute {
 						wconv.cp = cp - 1;
 					}
 					wconv.len = 0;
-					lookback = wconv.nextchr().look();
-					wc = wconv.nextchr().look();
+					wcprev = wcnext, wcnext = wconv.nextchr().look();
 				}
 			} else {
-				while (!r.firstcset->test(wc)) {
-					if (wc == WConv::End)
+				while (!r.firstcset->test(wcnext)) {
+					if (wcnext == WConv::End)
 						goto exit;
-					lookback = wc;
-					wc = wconv.nextchr().look();
+					wcprev = wcnext, wcnext = wconv.nextchr().look();
 				}
 			}
 		}
 		nsinit.boff = wconv.off();
-		add(mcsvs[0], 0, nsinit);
+		add(mcsvs[0], 0, nsinit, wcnext);
 		if (!epsq.empty())
-			epsclosure(mcsvs[0]);
+			epsclosure(mcsvs[0], wcnext);
 		for (;;) { // unrolled to ping-pong roles of mcsvs[0]/[1]
-			if (wc == WConv::End)
+			if (wcnext == WConv::End)
 				break;
 			epsv.clear();
+			wcprev = wcnext, wcnext = wconv.nextchr().look();
 			while (!mcsvs[0].empty()) {
 				auto [n, ns] = mcsvs[0].remove();
-				auto t = nodes[n].type;
-				if (t <= WCharMax) {
-					if (wc != (WChar) t)
-						continue;
-				} else {
-					if (!r.csets[nodes[n].args[0]].test(wc))
-						continue;
-				}
-				add(mcsvs[1], n + 1, ns);
+				add(mcsvs[1], n + 1, ns, wcnext);
 			}
-			wconv.nextchr(), lookback = wc, wc = wconv.look();
-			if (!best.has_value() && (!r.firstcset.has_value() || r.firstcset->test(wc))) {
+			if (!best.has_value() && (!r.firstcset.has_value() || r.firstcset->test(wcnext))) {
 				nsinit.boff = wconv.off();
-				add(mcsvs[1], 0, nsinit);
+				add(mcsvs[1], 0, nsinit, wcnext);
 			}
 			if (!epsq.empty())
-				epsclosure(mcsvs[1]);
+				epsclosure(mcsvs[1], wcnext);
 			if (mcsvs[1].empty()) {
 				if (best.has_value())
 					break;
 				if (r.firstcset.has_value())
 					goto zoom;
 			}
-			if (wc == WConv::End)
+			if (wcnext == WConv::End)
 				break;
 			epsv.clear();
+			wcprev = wcnext, wcnext = wconv.nextchr().look();
 			while (!mcsvs[1].empty()) {
 				auto [n, ns] = mcsvs[1].remove();
-				auto t = nodes[n].type;
-				if (t <= WCharMax) {
-					if (wc != (WChar) t)
-						continue;
-				} else {
-					if (!r.csets[nodes[n].args[0]].test(wc))
-						continue;
-				}
-				add(mcsvs[0], n + 1, ns);
+				add(mcsvs[0], n + 1, ns, wcnext);
 			}
-			wconv.nextchr(), lookback = wc, wc = wconv.look();
-			if (!best.has_value() && (!r.firstcset.has_value() || r.firstcset->test(wc))) {
+			if (!best.has_value() && (!r.firstcset.has_value() || r.firstcset->test(wcnext))) {
 				nsinit.boff = wconv.off();
-				add(mcsvs[0], 0, nsinit);
+				add(mcsvs[0], 0, nsinit, wcnext);
 			}
 			if (!epsq.empty())
-				epsclosure(mcsvs[0]);
+				epsclosure(mcsvs[0], wcnext);
 			if (mcsvs[0].empty()) {
 				if (best.has_value())
 					break;
