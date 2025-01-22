@@ -1,3 +1,8 @@
+2025-01-22         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* configure.ac: Set CXXFLAGS correctly for MinRX: Use -O3
+	and -std=c++20.
+
 2025-01-07         Arnold D. Robbins     <arnold@skeeve.com>
 
 	Thanks to Cristian Ioneci <mekanofox@astropostale.com> for the

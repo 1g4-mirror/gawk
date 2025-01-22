@@ -154,7 +154,7 @@ AC_SUBST(CFLAGS)
 
 if test -f $srcdir/support/minrx.h && test -f $srcdir/support/minrx.cpp
 then
-	CXXFLAGS='-std=c++17'
+	CXXFLAGS='-O3 -std=c++20'
 fi
 
 AC_SUBST(CXXFLAGS)

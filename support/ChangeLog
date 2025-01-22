@@ -1,3 +1,8 @@
+2025-01-22         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* Makefile.am (CXXFLAGS): Get the value from Autoconf.
+	Compiles minrx.cpp with -O3, which it really needs.
+
 2025-01-21         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* minrx.cpp: Update again.

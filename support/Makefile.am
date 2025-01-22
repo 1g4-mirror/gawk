@@ -87,7 +87,7 @@ CFLAGS += -DNDEBUG
 AM_CFLAGS += -DNDEBUG
 endif
 
-CXXFLAGS = -std=c++20
+CXXFLAGS = @CXXFLAGS@
 
 # For some make's, e.g. OpenBSD, that don't define this
 RM = rm -f
