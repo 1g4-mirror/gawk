@@ -150,17 +150,17 @@ am__libsupport_a_SOURCES_DIST = attribute.h cdefs.h charset.c \
 	charset.h dfa.c dfa.h dynarray.h flexmember.h getopt.c \
 	getopt.h getopt1.c getopt_int.h idx.h intprops.h \
 	intprops-internal.h libc-config.h localeinfo.c localeinfo.h \
-	minrx.cpp minrx.h random.c random.h regex.c regex.h roaring.c \
-	roaring.h verify.h xalloc.h malloc/dynarray.h \
-	malloc/dynarray_at_failure.c malloc/dynarray_emplace_enlarge.c \
-	malloc/dynarray_finalize.c malloc/dynarray_resize.c \
-	malloc/dynarray_resize_clear.c pma.c pma.h
+	minrx.cpp minrx.h random.c random.h regex.c regex.h verify.h \
+	xalloc.h malloc/dynarray.h malloc/dynarray_at_failure.c \
+	malloc/dynarray_emplace_enlarge.c malloc/dynarray_finalize.c \
+	malloc/dynarray_resize.c malloc/dynarray_resize_clear.c pma.c \
+	pma.h
 am__dirstamp = $(am__leading_dot)dirstamp
 @USE_PERSISTENT_MALLOC_TRUE@am__objects_1 = pma.$(OBJEXT)
 am_libsupport_a_OBJECTS = charset.$(OBJEXT) dfa.$(OBJEXT) \
 	getopt.$(OBJEXT) getopt1.$(OBJEXT) localeinfo.$(OBJEXT) \
 	minrx.$(OBJEXT) random.$(OBJEXT) regex.$(OBJEXT) \
-	roaring.$(OBJEXT) malloc/dynarray_at_failure.$(OBJEXT) \
+	malloc/dynarray_at_failure.$(OBJEXT) \
 	malloc/dynarray_emplace_enlarge.$(OBJEXT) \
 	malloc/dynarray_finalize.$(OBJEXT) \
 	malloc/dynarray_resize.$(OBJEXT) \
@@ -185,7 +185,7 @@ am__depfiles_remade = ./$(DEPDIR)/charset.Po ./$(DEPDIR)/dfa.Po \
 	./$(DEPDIR)/getopt.Po ./$(DEPDIR)/getopt1.Po \
 	./$(DEPDIR)/localeinfo.Po ./$(DEPDIR)/minrx.Po \
 	./$(DEPDIR)/pma.Po ./$(DEPDIR)/random.Po ./$(DEPDIR)/regex.Po \
-	./$(DEPDIR)/roaring.Po malloc/$(DEPDIR)/dynarray_at_failure.Po \
+	malloc/$(DEPDIR)/dynarray_at_failure.Po \
 	malloc/$(DEPDIR)/dynarray_emplace_enlarge.Po \
 	malloc/$(DEPDIR)/dynarray_finalize.Po \
 	malloc/$(DEPDIR)/dynarray_resize.Po \
@@ -402,8 +402,8 @@ libsupport_a_SOURCES = attribute.h cdefs.h charset.c charset.h dfa.c \
 	dfa.h dynarray.h flexmember.h getopt.c getopt.h getopt1.c \
 	getopt_int.h idx.h intprops.h intprops-internal.h \
 	libc-config.h localeinfo.c localeinfo.h minrx.cpp minrx.h \
-	random.c random.h regex.c regex.h roaring.c roaring.h verify.h \
-	xalloc.h malloc/dynarray.h malloc/dynarray_at_failure.c \
+	random.c random.h regex.c regex.h verify.h xalloc.h \
+	malloc/dynarray.h malloc/dynarray_at_failure.c \
 	malloc/dynarray_emplace_enlarge.c malloc/dynarray_finalize.c \
 	malloc/dynarray_resize.c malloc/dynarray_resize_clear.c \
 	$(am__append_1)
@@ -487,7 +487,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regex.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roaring.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@malloc/$(DEPDIR)/dynarray_at_failure.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@malloc/$(DEPDIR)/dynarray_emplace_enlarge.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@malloc/$(DEPDIR)/dynarray_finalize.Po@am__quote@ # am--include-marker
@@ -666,7 +665,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/pma.Po
 	-rm -f ./$(DEPDIR)/random.Po
 	-rm -f ./$(DEPDIR)/regex.Po
-	-rm -f ./$(DEPDIR)/roaring.Po
 	-rm -f malloc/$(DEPDIR)/dynarray_at_failure.Po
 	-rm -f malloc/$(DEPDIR)/dynarray_emplace_enlarge.Po
 	-rm -f malloc/$(DEPDIR)/dynarray_finalize.Po
@@ -726,7 +724,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/pma.Po
 	-rm -f ./$(DEPDIR)/random.Po
 	-rm -f ./$(DEPDIR)/regex.Po
-	-rm -f ./$(DEPDIR)/roaring.Po
 	-rm -f malloc/$(DEPDIR)/dynarray_at_failure.Po
 	-rm -f malloc/$(DEPDIR)/dynarray_emplace_enlarge.Po
 	-rm -f malloc/$(DEPDIR)/dynarray_finalize.Po

@@ -1,3 +1,8 @@
+2025-01-26         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* Makefile.am (EXTRA_DIST): Remove roaring.c and roaring.h:
+	* roaring.c, roaring.h: Removed.
+
 2025-01-22         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (CXXFLAGS): Get the value from Autoconf.
