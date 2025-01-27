@@ -1,3 +1,7 @@
+2025-01-27         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* minrx.cpp: Update again. More speedups.
+
 2025-01-26         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am (EXTRA_DIST): Remove roaring.c and roaring.h:
