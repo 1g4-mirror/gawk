@@ -52,6 +52,12 @@
 #endif
 #include "minrx.h"
 
+#ifdef __GNUC__
+#define INLINE __attribute__((__always_inline__)) inline
+#else
+#define INLINE inline
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -67,9 +73,9 @@
 
 namespace MinRX {
 
-template <typename UINT> inline auto ctz(UINT x) { return __builtin_ctz(x); }
-template <> inline auto ctz(unsigned long x) { return __builtin_ctzl(x); }
-template <> inline auto ctz(unsigned long long x) { return __builtin_ctzll(x); }
+template <typename UINT> auto ctz(UINT x) { return __builtin_ctz(x); }
+template <> auto ctz(unsigned long x) { return __builtin_ctzl(x); }
+template <> auto ctz(unsigned long long x) { return __builtin_ctzll(x); }
 
 template <typename TYPE, TYPE INIT = 0>
 struct COWVec {
@@ -172,15 +178,6 @@ struct COWVec {
 		(*storage)[idx] = val;
 		return *this;
 	}
-	COWVec &sub(std::size_t idx, TYPE val) {
-		if (storage->refcnt > 1) {
-			--storage->refcnt;
-			storage = storage->clone();
-			storage->refcnt = 1;
-		}
-		(*storage)[idx] -= val;
-		return *this;
-	}
 };
 
 template <typename UINT>
@@ -198,7 +195,7 @@ struct QSet {
 		bits[0][0] = 0;
 	}
 	~QSet() { ::operator delete(bits[0]); }
-	inline static std::uint64_t bit(UINT k) { return (std::uint64_t) 1 << (k & 0x3F); }
+	static std::uint64_t bit(UINT k) { return (std::uint64_t) 1 << (k & 0x3F); }
 	bool empty() const { return !bits[0][0]; }
 	bool contains(UINT k) const {
 		int i = 0, s = 6 * depth;
@@ -686,9 +683,6 @@ struct CSet {
 	std::pair<std::optional<const std::array<bool, 256>>, std::optional<char>>
 	firstbytes(WConv::Encoding e) const {
 		std::array<bool, 256> fb = {};
-#ifdef ROARING
-		roaring_uint32_iterator_t *i;
-#endif
 		auto firstunique = [](const std::array<bool, 256> &fb) -> std::optional<char> {
 			int n = 0, u = -1;
 			for (int i = 0; i < 256; ++i)
@@ -698,16 +692,6 @@ struct CSet {
 		};
 		switch (e) {
 		case WConv::Encoding::Byte:
-#ifdef ROARING
-			i = roaring_iterator_create(bitmap);
-			while (i->has_value) {
-				if (i->current_value > 255)
-					break;
-				fb[i->current_value] = true;
-				roaring_uint32_iterator_advance(i);
-			}
-			roaring_uint32_iterator_free(i);
-#else
 			for (const auto &r : ranges) {
 				if (r.min > 255)
 					break;
@@ -715,23 +699,13 @@ struct CSet {
 				for (auto b = lo; b <= hi; b++)
 					fb[b] = true;
 			}
-#endif
 			return {fb, firstunique(fb)};
 		case WConv::Encoding::UTF8:
-#ifdef ROARING
-			i = roaring_iterator_create(bitmap);
-			while (i->has_value) {
-				fb[utfprefix(i->current_value)] = true;
-				roaring_uint32_iterator_advance(i);
-			}
-			roaring_uint32_iterator_free(i);
-#else
 			for (const auto &r : ranges) {
 				auto lo = utfprefix(r.min), hi = utfprefix(r.max);
 				for (auto b = lo; b <= hi; b++)
 					fb[b] = true;
 			}
-#endif
 			return {fb, firstunique(fb)};
 		default:
 			return {{}, {}};
@@ -1271,6 +1245,7 @@ struct Execute {
 	const Node *nodes = r.nodes.data();
 	Execute(const Regexp &r, minrx_regexec_flags_t flags, const char *bp, const char *ep) : r(r), flags(flags), wconv(r.enc, bp, ep) {}
 	template <typename... XArgs>
+	INLINE
 	void add(QVec<NInt, NState> &ncsv, NInt k, NInt nstk, const NState &ns, WChar wcnext, XArgs... xargs) {
 		const Node &n = nodes[k];
 		if (n.type <= Node::CSet) {
@@ -1475,7 +1450,7 @@ struct Execute {
 				auto [n, ns] = mcsvs[0].remove();
 				add(mcsvs[1], n + 1, nodes[n].nstk, ns, wcnext);
 			}
-			if (!best.has_value() && (!r.firstcset.has_value() || r.firstcset->test(wcnext))) {
+			if (!best.has_value() && (!r.firstbytes.has_value() || (wcnext != WConv::End && (*r.firstbytes)[(unsigned char) *wconv.cp]))) {
 				nsinit.boff = wconv.off();
 				add(mcsvs[1], 0, 0, nsinit, wcnext);
 			}
@@ -1495,7 +1470,7 @@ struct Execute {
 				auto [n, ns] = mcsvs[1].remove();
 				add(mcsvs[0], n + 1, nodes[n].nstk, ns, wcnext);
 			}
-			if (!best.has_value() && (!r.firstcset.has_value() || r.firstcset->test(wcnext))) {
+			if (!best.has_value() && (!r.firstbytes.has_value() || (wcnext != WConv::End && (*r.firstbytes)[(unsigned char) *wconv.cp]))) {
 				nsinit.boff = wconv.off();
 				add(mcsvs[0], 0, 0, nsinit, wcnext);
 			}
