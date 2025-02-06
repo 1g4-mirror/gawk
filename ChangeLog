@@ -1,3 +1,7 @@
+2025-02-06         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* configure.ac: Update CXXFLAGS for debug also, not just CFLAGS.
+
 2025-02-05         Arnold D. Robbins     <arnold@skeeve.com>
 
 	Bug fixes for indirect calls of match and patsplit.

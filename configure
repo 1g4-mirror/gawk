@@ -15815,7 +15815,8 @@ EOF
 	fi
 	for i in . support extension
 	do
-		sed -e '/-O2/s///' -e '/^CFLAGS = /s//&${DEBUG} /' $i/Makefile > foo
+		sed -e '/-O2/s///' -e '/^CFLAGS = /s//&${DEBUG} /' \
+		-e '/^CXXFLAGS = /s//&${DEBUG} /' $i/Makefile > foo
 		mv foo $i/Makefile
 	done
 elif test "$GCC" = yes
