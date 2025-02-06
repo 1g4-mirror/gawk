@@ -727,11 +727,12 @@ struct Node {
 		CSet = WCharMax + 1,	// args = index in Regexp::csets vector
 		// epsilon-matching node types
 		Exit,			// no args
-		Fork,			// args = priority delta, offset to next
-		Goto,			// args = offset to join, offset to next
-		Join,			// args = offset to fork
+		Fork,			// args = offset to first goto
+		Goto,			// args = offset to next goto, offset to just after join
+		Join,			// args = none (but supplies incoming stack depth for next node)
 		Loop,			// args = offset to next, optional flag
 		Next,			// args = offset to loop, infinite flag
+		Skip,			// args = offset over skipped nodes
 		SubL,			// args = minimum and maximum contained subexpression numbers
 		SubR,			// args = minimum and maximum contained subexpression numbers
 		ZBOB,			// no args - match empty string at beginning of buffer
@@ -811,16 +812,16 @@ struct Compile {
 			auto [rhs, rhmaxstk, err] = alts.back();
 			if (err)
 				return {rhs, rhmaxstk, err};
-			rhs.push_front({Node::Goto, {rhs.size(), rhs.size()}, nstk + 1});
+			rhs.push_front({Node::Goto, {rhs.size(), rhs.size() + 1}, nstk + 1});
 			alts.pop_back();
 			while (!alts.empty()) {
 				auto [mhs, mhmaxstk, _] = alts.back();
 				alts.pop_back();
 				rhs.insert(rhs.begin(), mhs.begin(), mhs.end());
 				rhmaxstk = std::max(mhmaxstk, rhmaxstk);
-				rhs.push_front({Node::Goto, {rhs.size(), mhs.size()}, nstk + 1});
+				rhs.push_front({Node::Goto, {mhs.size(), rhs.size() + 1}, nstk + 1});
 			}
-			lhs.push_front({Node::Fork, {(NInt) -1, lhs.size()}, nstk + 1});
+			lhs.push_front({Node::Fork, { lhs.size(), 0 }, nstk + 1});
 			lhs.insert(lhs.end(), rhs.begin(), rhs.end());
 			lhmaxstk = std::max(lhmaxstk, rhmaxstk);
 			lhs.push_back({Node::Join, {lhs.size() - 1, 0}, nstk + 1});
@@ -847,9 +848,7 @@ struct Compile {
 		if (optional && !infinite) {
 			for (auto &l : lhs) l.nstk += 1;
 			auto lhsize = lhs.size();
-			lhs.push_front({Node::Fork, {(NInt) 1, lhsize}, nstk + 1});
-			// NOTE: Restore the following if someday we need a reversible automaton.
-			// lhs.push_back({Node::Join, {lhsize, 0}, nstk + 1});
+			lhs.push_front({Node::Skip, {lhsize, 0}, nstk + 1});
 			return {lhs, lhmaxstk + 1, MINRX_REG_SUCCESS};
 		} else {
 			for (auto &l : lhs) l.nstk += 3;
@@ -883,9 +882,7 @@ struct Compile {
 			for (auto &r : rhs)
 				r.nstk += 1;
 			auto rhsize = rhs.size();
-			rhs.push_front({Node::Fork, {1, rhsize}, nstk + 1});
-			// NOTE: Restore the following if someday we need a reversible automaton.
-			// rhs.push_back({Node::Join, {rhsize, 0}, nstk + 1});
+			rhs.push_front({Node::Skip, {rhsize, 0}, nstk + 1});
 			for (; k < n; ++k)
 				lhs.insert(lhs.end(), rhs.begin(), rhs.end());
 		}
@@ -1166,22 +1163,22 @@ struct Compile {
 				case Node::Exit:
 					return {};
 				case Node::Fork:
-					if (n.args[0] != 1) { // x|y|...
-						do
-							add(k + 1), k = k + 1 + nodes[k].args[1];
-						while (nodes[k].type == Node::Goto);
-					} else {
+					do {
 						add(k + 1);
-						add(k + 1 + nodes[k].args[1]);
-					}
+						k = k + 1 + nodes[k].args[0];
+					} while (nodes[k].type != Node::Join);
 					break;
 				case Node::Goto:
-					add(k + 1 + n.args[1]);
+					add(k + 1 + n.args[0]);
 					break;
 				case Node::Loop:
 					add(k + 1);
 					if (n.args[1])
 						add(k + 1 + n.args[0]);
+					break;
+				case Node::Skip:
+					add(k + 1);
+					add(k + 1 + n.args[0]);
 					break;
 				default:
 					add(k + 1);
@@ -1225,17 +1222,23 @@ struct Compile {
 struct Execute {
 	typedef COWVec<std::size_t, (std::size_t) -1> Vec;
 	struct NState {
+		std::size_t gen = 0;
 		std::size_t boff;
 		Vec substack;
 		NState() {}
 		NState(Vec::Allocator &allocator): substack(allocator) {}
 		template <typename... XArgs>
-		bool cmpgt(const NState &ns, std::size_t nstk, XArgs... xargs) const {
-			return boff != ns.boff ? boff < ns.boff : substack.cmpgt(ns.substack, nstk, xargs...);
+		bool cmpgt(const NState &ns, std::size_t gen, std::size_t nstk, XArgs... xargs) const {
+			if (gen != ns.gen)
+				return gen > ns.gen;
+			if (boff != ns.boff)
+				return boff < ns.boff;
+			return substack.cmpgt(ns.substack, nstk, xargs...);
 		}
 	};
 	const Regexp &r;
 	const minrx_regexec_flags_t flags;
+	std::size_t gen = 0;
 	WConv wconv;
 	WChar wcprev = WConv::End;
 	Vec::Allocator allocator { r.nstk + 2 * r.nsub };
@@ -1253,10 +1256,11 @@ struct Execute {
 				auto [newly, newns] = ncsv.insert(k, ns);
 				if (newly)
 					new (&newns) NState(ns);
-				else if (ns.cmpgt(newns, nstk, xargs...))
+				else if (ns.cmpgt(newns, gen, nstk, xargs...))
 					newns = ns;
 				else
 					return;
+				newns.gen = gen;
 				if constexpr (sizeof... (XArgs) > 0) {
 					auto i = nstk - sizeof...(XArgs);
 					(newns.substack.put(i++, xargs), ...);
@@ -1266,10 +1270,11 @@ struct Execute {
 			auto [newly, newns] = epsv.insert(k, ns);
 			if (newly)
 				new (&newns) NState(ns);
-			else if (ns.cmpgt(newns, nstk, xargs...))
+			else if (ns.cmpgt(newns, gen, nstk, xargs...))
 				newns = ns;
 			else
 				return;
+			newns.gen = gen;
 			if constexpr (sizeof... (XArgs) > 0) {
 				auto i = nstk - sizeof...(XArgs);
 				(newns.substack.put(i++, xargs), ...);
@@ -1303,19 +1308,16 @@ struct Execute {
 				}
 				break;
 			case Node::Fork:
-				if (auto pridelta = n.args[0]; pridelta != 1) { // x|y|...
-					NInt priority = 0;
+				{
+					NInt priority = (NInt) -1;
 					do {
-						add(ncsv, k + 1, nstk, ns, wcnext, priority += pridelta);
-						k = k + 1 + nodes[k].args[1];
+						add(ncsv, k + 1, nstk, ns, wcnext, priority--);
+						k = k + 1 + nodes[k].args[0];
 					} while (nodes[k].type != Node::Join);
-				} else { // x?
-					add(ncsv, k + 1, nstk, ns, wcnext, (NInt) 0);
-					add(ncsv, k + 1 + n.args[1], nstk, ns, wcnext, (NInt) 1);
 				}
 				break;
 			case Node::Goto:
-				add(ncsv, k + 1 + n.args[0] + 1, nstk, ns, wcnext);
+				add(ncsv, k + 1 + n.args[1], nstk, ns, wcnext);
 				break;
 			case Node::Join:
 				add(ncsv, k + 1, nstk, ns, wcnext);
@@ -1329,6 +1331,10 @@ struct Execute {
 				add(ncsv, k + 1, nstk, ns, wcnext);
 				if (n.args[1] && wconv.off() > ns.substack.get(nstk + 3 - 1))
 					add(ncsv, k - n.args[0], nstk + 3, ns, wcnext, ns.substack.get(nstk), ns.substack.get(nstk + 1) - 1, (NInt) wconv.off());
+				break;
+			case Node::Skip:
+				add(ncsv, k + 1, nstk, ns, wcnext, (NInt) 0);
+				add(ncsv, k + 1 + n.args[0], nstk, ns, wcnext, (NInt) 1);
 				break;
 			case Node::SubL:
 				{
@@ -1444,7 +1450,7 @@ struct Execute {
 		for (;;) { // unrolled to ping-pong roles of mcsvs[0]/[1]
 			if (wcnext == WConv::End)
 				break;
-			epsv.clear();
+			++gen;
 			wcprev = wcnext, wcnext = wconv.nextchr().look();
 			while (!mcsvs[0].empty()) {
 				auto [n, ns] = mcsvs[0].remove();
@@ -1464,7 +1470,7 @@ struct Execute {
 			}
 			if (wcnext == WConv::End)
 				break;
-			epsv.clear();
+			++gen;
 			wcprev = wcnext, wcnext = wconv.nextchr().look();
 			while (!mcsvs[1].empty()) {
 				auto [n, ns] = mcsvs[1].remove();
