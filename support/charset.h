@@ -2,7 +2,7 @@
 #define CHARSET_H 1
 
 /*
- * Copyright (C) 2023, 2024, Arnold David Robbins.
+ * Copyright (C) 2023, 2024, 2025, Arnold David Robbins.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,17 +48,26 @@ enum {
 	CSET_ESPACE,		// Corresponds to REG_ESPACE
 	CSET_ERANGE,		// Corresponds to REG_ERANGE
 };
-charset_t *charset_create(int *errcode);
+charset_t *charset_create(int *errcode, int mb_cur_max, bool is_utf8);
 int charset_add_char(charset_t *set, int32_t wc);
 int charset_add_range(charset_t *set, int32_t first, int32_t last);
-int charset_invert(charset_t *set);
+charset_t *charset_invert(charset_t *set, int *errcode);
 int charset_set_no_newlines(charset_t *set, bool no_newlines);
-int charset_add_cclass(charset_t *set, const char *cclass);
 int charset_add_equiv(charset_t *set, int32_t equiv);
 int charset_add_collate(charset_t *set, const int32_t *collate);
+int charset_add_cclass(charset_t *set, const char *cclass);
+charset_t *charset_copy(charset_t *set, int *errcode);
+int charset_merge(charset_t *dest, charset_t *src);
 bool charset_in_set(const charset_t *set, int32_t the_char);
 int charset_free(const charset_t *set);
-void charset_dump(const charset_t *set, FILE *fp);
+#define MAX_FIRSTBYTES	256
+typedef struct {
+	bool bytes[MAX_FIRSTBYTES];
+} charset_firstbytes_t;
+
+charset_firstbytes_t charset_firstbytes(charset_t *set, int *errcode);
+void charset_dump(const charset_t *set, FILE *fp, bool use_c_format);
+void charset_finalize(charset_t *set);
 
 #ifdef __cplusplus
 }
