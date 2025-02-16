@@ -1,3 +1,7 @@
+2025-02-16         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* minrx.cpp: Update again. Minor speedups.
+
 2025-02-11         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* minrx.cpp: Update again. More speedups.
