@@ -1,3 +1,7 @@
+2025-02-18         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* charset.c, charset.h, minrx.h, minrx.cpp: Updated.
+
 2025-02-16         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* minrx.cpp: Update again. Minor speedups.

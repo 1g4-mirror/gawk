@@ -67,7 +67,7 @@ typedef struct {
 
 charset_firstbytes_t charset_firstbytes(charset_t *set, int *errcode);
 void charset_dump(const charset_t *set, FILE *fp, bool use_c_format);
-void charset_finalize(charset_t *set);
+int charset_finalize(charset_t *set);
 
 #ifdef __cplusplus
 }

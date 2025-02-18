@@ -36,6 +36,7 @@
 #include <wctype.h>
 #include <wchar.h>
 #include <locale.h>
+#include <pthread.h>
 #include "charset.h"	// for the charset_t typedef
 
 #define INITIAL_ALLOCATION 10
@@ -3431,13 +3432,14 @@ find_class_in_cache(charset_t *set, const char *cclass, int *errcode, bool *is_n
 		pcache = (struct _class_cache *) malloc(sizeof(struct _class_cache));
 		if (pcache == NULL) {
 			*errcode = CSET_ESPACE;
+			free((void *) buf);
 			return NULL;
 		}
 		pcache->name = buf;
 		pcache->next = NULL;
 		charset_t *newset = charset_create(errcode, set->mb_cur_max, set->is_utf8);
 		if (newset == NULL) {
-			*errcode = CSET_ESPACE;
+			// *errcode already set
 			free((void *) pcache->name);
 			return NULL;
 		}
@@ -3455,13 +3457,14 @@ find_class_in_cache(charset_t *set, const char *cclass, int *errcode, bool *is_n
 		pcache = (struct _class_cache *) malloc(sizeof(struct _class_cache));
 		if (pcache == NULL) {
 			*errcode = CSET_ESPACE;
+			free((void *) buf);
 			return NULL;
 		}
 		pcache->name = buf;
 		pcache->next = NULL;
 		charset_t *newset = charset_create(errcode, set->mb_cur_max, set->is_utf8);
 		if (newset == NULL) {
-			*errcode = CSET_ESPACE;
+			// *errcode already set
 			free((void *) pcache->name);
 			return NULL;
 		}
@@ -3480,26 +3483,37 @@ done:
 static int
 wide_char_range_loop(charset_t *set, const char *cclass, wctype_t ctype)
 {
-	// FIXME: Need to wrap this function in a mutex
+	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+	pthread_mutex_lock(& mutex);
+
 	int errcode = 0;
 	bool is_new = false;
-	charset_t *newset = find_class_in_cache(set, cclass, & errcode, & is_new);
+	int ret = CSET_SUCCESS;
+	charset_t *class_set = find_class_in_cache(set, cclass, & errcode, & is_new);
 
-	if (newset == NULL)
-		return errcode;
-
-	if (is_new) {
-		for (int32_t c = 0; c < MAX_CODE_POINT; c++) {
-			if (iswctype(c, ctype)) {
-				int ret;
-				if ((ret = charset_add_char(newset, c)) != CSET_SUCCESS)
-					return ret;
-			}
-		}
-		charset_finalize(newset);
+	if (class_set == NULL) {
+		ret = errcode;
+		goto done;
 	}
 
-	return charset_merge(set, newset);
+	if (is_new) {
+		for (int32_t c = 0; c <= MAX_CODE_POINT; c++) {
+			if (iswctype(c, ctype)) {
+				if ((ret = charset_add_char(class_set, c)) != CSET_SUCCESS)
+					goto done;
+			}
+		}
+		ret = charset_finalize(class_set);
+		if (ret != CSET_SUCCESS)
+			goto done;
+	}
+
+	ret = charset_merge(set, class_set);
+
+done:
+	pthread_mutex_unlock(& mutex);
+	return ret;
 }
 /* item_compare_for_searching --- compare two set_items */
 
@@ -3579,11 +3593,11 @@ utfprefix(int32_t wc)
 }
 /* charset_finalize --- condense all the info into the final data structure */
 
-void
+int
 charset_finalize(charset_t *set)
 {
 	assert(set != NULL);
-	int result = 0;
+	int result = CSET_SUCCESS;
 
 	qsort(set->chars, set->nchars_inuse, sizeof(int32_t), int32_t_compare);
 	size_t i, j;
@@ -3611,7 +3625,7 @@ charset_finalize(charset_t *set)
 			// push a and start next range at c
 			result = charset_add_range(set, set->chars[range_start], set->chars[i]);
 			if (result != CSET_SUCCESS)
-				return;
+				return result;
 			total++;
 			range_start = j;
 		}
@@ -3621,7 +3635,7 @@ charset_finalize(charset_t *set)
 		result = charset_add_range(set, set->chars[range_start],
 					set->chars[set->nchars_inuse-1]);
 		if (result != CSET_SUCCESS)
-			return;
+			return result;
 		total++;
 	}
 	set->nchars_inuse = total;
@@ -3664,6 +3678,8 @@ charset_finalize(charset_t *set)
 		}
 	}
 	set->finalized = true;
+
+	return result;
 }
 /* charset_create --- make a new charset_t and initialize it */
 
@@ -3778,16 +3794,15 @@ charset_invert(charset_t *set, int *errcode)
 	}
 
 	if (! set->finalized) {
-		charset_finalize(set);
-
-		if (! set->finalized) {
-			*errcode = CSET_ESPACE;	// make a guess
+		ret = charset_finalize(set);
+		if (ret != CSET_SUCCESS) {
+			*errcode = ret;
 			return NULL;
 		}
 	}
 
 	charset_t *newset = charset_create(errcode, set->mb_cur_max, set->is_utf8);
-	if (newset == NULL)
+	if (newset == NULL)	// *errcode is already set
 		return NULL;
 
 	newset->no_newlines = set->no_newlines;
@@ -3892,6 +3907,8 @@ charset_add_cclass(charset_t *set, const char *cclass)
 		return CSET_EBADPTR;
 	if (set->finalized)
 		return CSET_EFROZEN;
+	if (cclass == NULL)
+		return CSET_EBADPTR;
 
 	int index = find_class(cclass);
 
@@ -3958,7 +3975,6 @@ charset_copy(charset_t *set, int *errcode)
 {
 	if (errcode == NULL)
 		return NULL;
-
 	if (set == NULL) {
 		*errcode = CSET_EBADPTR;
 		return NULL;
@@ -4057,17 +4073,18 @@ charset_merge(charset_t *dest, charset_t *src)
 bool
 charset_in_set(const charset_t *set, int32_t the_char)
 {
+	int ret;
+
 	if (set == NULL || the_char < 0)
 		return false;
 
 	if (! set->finalized) {
-		charset_finalize((charset_t *) set);
-
-		if (! set->finalized)	// finalize() failed
+		ret = charset_finalize((charset_t *) set);
+		if (ret != CSET_SUCCESS)
 			return false;
 	}
 
-	if (the_char == L'\n' && set->no_newlines)	// FIXME: is this still right?
+	if (the_char == L'\n' && set->no_newlines)
 		return false;
 
 	bool found = is_found(set, the_char);
@@ -4098,7 +4115,9 @@ charset_free(const charset_t *set)
 charset_firstbytes_t
 charset_firstbytes(charset_t *set, int *errcode)
 {
+	int ret;
 	charset_firstbytes_t result;
+
 	memset(& result, 0, sizeof(result));
 
 	if (errcode == NULL)
@@ -4110,10 +4129,10 @@ charset_firstbytes(charset_t *set, int *errcode)
 	}
 
 	if (! set->finalized) {
-		charset_finalize(set);
+		ret = charset_finalize(set);
 
-		if (! set->finalized) {
-			*errcode = CSET_ESPACE;	// guess...
+		if (ret != CSET_SUCCESS) {
+			*errcode = ret;
 			goto done;
 		}
 	}
