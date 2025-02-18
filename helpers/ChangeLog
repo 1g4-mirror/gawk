@@ -1,3 +1,8 @@
+2025-02-16         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* bisect_run_test.sh, gen-po-sh.sh, mpfr-percent-a.awk,
+	signstuff.c: New files.
+
 2024-12-29         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* minrx-timings.sh: New file.

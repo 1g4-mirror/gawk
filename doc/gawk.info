@@ -32626,6 +32626,8 @@ target parameter may need to be exact.
    ‘gawk’ has been tested using these VMS Software, Inc. Community
 editions:
 
+   • VSI C x86-64 V7.6-001 (GEM 50YAN) on OpenVMS x86_64 V9.2-3
+
    • HP C V7.3-010 on OpenVMS Alpha V8.4-2L1.
 
    • HP C V7.3-020 on OpenVMS IA64 V8.4-2L3.(1)
@@ -32660,9 +32662,10 @@ logical name to find the dynamic extensions.
 
    Dynamic extensions need to be compiled with the same compiler options
 for floating-point, pointer size, and symbol name handling as were used
-to compile ‘gawk’ itself.  Alpha and Itanium should use IEEE floating
-point.  The pointer size is 32 bits, and the symbol name handling should
-be exact case with CRC shortening for symbols longer than 32 bits.
+to compile ‘gawk’ itself.  X86_64, Alpha, and Itanium should use IEEE
+floating point.  The pointer size is 32 bits, and the symbol name
+handling should be exact case with CRC shortening for symbols longer
+than 32 bits.
 
      /name=(as_is,short)
      /float=ieee/ieee_mode=denorm_results
@@ -40778,50 +40781,50 @@ Node: Cygwin1359168
 Node: MSYS1360421
 Node: OpenVMS Installation1361047
 Node: OpenVMS Compilation1361728
-Ref: OpenVMS Compilation-Footnote-11363211
-Node: OpenVMS Dynamic Extensions1363269
-Node: OpenVMS Installation Details1364905
-Node: OpenVMS Running1367336
-Node: OpenVMS GNV1371473
-Node: Bugs1372228
-Node: Bug definition1373148
-Node: Bug address1376750
-Node: Usenet1380319
-Node: Performance bugs1381532
-Node: Asking for help1384536
-Node: Maintainers1386523
-Node: Other Versions1387550
-Node: Installation summary1397618
-Node: Notes1399000
-Node: Compatibility Mode1399810
-Node: Additions1400632
-Node: Accessing The Source1401577
-Node: Adding Code1403110
-Node: New Ports1410221
-Node: Derived Files1414724
-Ref: Derived Files-Footnote-11420535
-Ref: Derived Files-Footnote-21420570
-Ref: Derived Files-Footnote-31421181
-Node: Future Extensions1421295
-Node: Implementation Limitations1421965
-Node: Extension Design1423207
-Node: Old Extension Problems1424367
-Ref: Old Extension Problems-Footnote-11425939
-Node: Extension New Mechanism Goals1426000
-Ref: Extension New Mechanism Goals-Footnote-11429470
-Node: Extension Other Design Decisions1429671
-Node: Extension Future Growth1431868
-Node: Notes summary1432488
-Node: Basic Concepts1433698
-Node: Basic High Level1434383
-Ref: figure-general-flow1434665
-Ref: figure-process-flow1435367
-Ref: Basic High Level-Footnote-11438737
-Node: Basic Data Typing1438926
-Node: Glossary1442334
-Node: Copying1475216
-Node: GNU Free Documentation License1512774
-Node: Index1537897
+Ref: OpenVMS Compilation-Footnote-11363278
+Node: OpenVMS Dynamic Extensions1363336
+Node: OpenVMS Installation Details1364981
+Node: OpenVMS Running1367412
+Node: OpenVMS GNV1371549
+Node: Bugs1372304
+Node: Bug definition1373224
+Node: Bug address1376826
+Node: Usenet1380395
+Node: Performance bugs1381608
+Node: Asking for help1384612
+Node: Maintainers1386599
+Node: Other Versions1387626
+Node: Installation summary1397694
+Node: Notes1399076
+Node: Compatibility Mode1399886
+Node: Additions1400708
+Node: Accessing The Source1401653
+Node: Adding Code1403186
+Node: New Ports1410297
+Node: Derived Files1414800
+Ref: Derived Files-Footnote-11420611
+Ref: Derived Files-Footnote-21420646
+Ref: Derived Files-Footnote-31421257
+Node: Future Extensions1421371
+Node: Implementation Limitations1422041
+Node: Extension Design1423283
+Node: Old Extension Problems1424443
+Ref: Old Extension Problems-Footnote-11426015
+Node: Extension New Mechanism Goals1426076
+Ref: Extension New Mechanism Goals-Footnote-11429546
+Node: Extension Other Design Decisions1429747
+Node: Extension Future Growth1431944
+Node: Notes summary1432564
+Node: Basic Concepts1433774
+Node: Basic High Level1434459
+Ref: figure-general-flow1434741
+Ref: figure-process-flow1435443
+Ref: Basic High Level-Footnote-11438813
+Node: Basic Data Typing1439002
+Node: Glossary1442410
+Node: Copying1475292
+Node: GNU Free Documentation License1512850
+Node: Index1537973
 
 End Tag Table
 
