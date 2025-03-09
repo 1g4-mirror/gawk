@@ -1923,6 +1923,7 @@ enable_pma(char **argv)
 		warning(_("persistent memory is not supported"));
 		return false;
 	}
+	return true;	// silence compiler warnings
 #else
 	os_disable_aslr(persist_file, argv);
 
