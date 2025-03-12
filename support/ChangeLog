@@ -1,3 +1,7 @@
+2025-03-12         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* minrx.h, minrx.cpp: Updated.
+
 2025-02-19         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* dfa.c, dfa.h, dynarray.h, flexmember.h, intprops.h,
