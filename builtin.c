@@ -2317,7 +2317,7 @@ call_match(int nargs)
 	else if (regex->type == Node_var_new || regex->type == Node_elem_new) {
 		if (regex->type == Node_elem_new)
 			elem_new_reset(regex);
-		else if (regex->type == Node_var_new && regex->vname != NULL)
+		else if (regex->vname != NULL)
 			efree(regex->vname);
 		memset(regex, 0, sizeof(*regex));
 		regex->type = Node_dynregex;
@@ -2330,7 +2330,7 @@ call_match(int nargs)
 	if (text->type == Node_var_new || text->type == Node_elem_new) {
 		if (text->type == Node_elem_new)
 			elem_new_reset(text);
-		else if (text->type == Node_var_new && text->vname != NULL)
+		else if (text->vname != NULL)
 			efree(text->vname);
 		text = dupnode(Nnull_string);
 	}
