@@ -5937,6 +5937,13 @@ Second, @samp{*} finds as many repetitions as possible. If the text
 to be matched is @samp{phhhhhhhhhhhhhhooey}, @samp{ph*} matches all of
 the @samp{h}s.
 
+@cindex @code{*?} (asterisk) @subentry @code{*?} operator @subentry as regexp operator
+@cindex asterisk (@code{*?}) @subentry @code{*?} operator @subentry as regexp operator
+@item @code{*?}
+Shortest match or @dfn{non-greedy} version of the @samp{*} operator.
+This operator and the other non-greedy operators are discussed separately,
+shortly, in @ref{Non-greedy operators}.
+
 @cindex @code{+} (plus sign) @subentry regexp operator
 @cindex plus sign (@code{+}) @subentry regexp operator
 @item @code{+}
@@ -5945,12 +5952,22 @@ matched at least once.  This means that @samp{wh+y}
 would match @samp{why} and @samp{whhy}, but not @samp{wy}, whereas
 @samp{wh*y} would match all three.
 
+@cindex @code{+?} (plus sign) @subentry regexp operator
+@cindex plus sign (@code{+?}) @subentry regexp operator
+@item @code{+?}
+Shortest match or non-greedy version of the @samp{+} operator.
+
 @cindex @code{?} (question mark) @subentry regexp operator
 @cindex question mark (@code{?}) @subentry regexp operator
 @item @code{?}
 This symbol is similar to @samp{*}, except that the preceding expression can be
 matched either once or not at all.  For example, @samp{fe?d}
 matches @samp{fed} and @samp{fd}, but nothing else.
+
+@cindex @code{??} (plus sign) @subentry regexp operator
+@cindex plus sign (@code{??}) @subentry regexp operator
+@item @code{??}
+Shortest match or non-greedy version of the @samp{?} operator.
 
 @cindex @code{@{@}} (braces) @subentry regexp operator
 @cindex braces (@code{@{@}}) @subentry regexp operator
@@ -5976,6 +5993,13 @@ Matches @samp{whhhy}, @samp{whhhhy}, or @samp{whhhhhy} only.
 @item wh@{2,@}y
 Matches @samp{whhy}, @samp{whhhy}, and so on.
 @end table
+
+@cindex @code{@{@}?} (braces) @subentry regexp operator
+@cindex braces (@code{@{@}?}) @subentry regexp operator
+@item @code{@{}@var{n}@code{@}?}
+@itemx @code{@{}@var{n}@code{,@}?}
+@itemx @code{@{}@var{n}@code{,}@var{m}@code{@}?}
+Shortest match or non-greedy versions of the @samp{@{@}} operators.
 @end table
 
 @cindex precedence @subentry regexp operators
@@ -6095,6 +6119,11 @@ be used in portable programs anyway.
 
 @noindent
 This same caveat applies to @command{gawk}.
+
+@node Non-greedy operators
+@subsection Shortest Match, or ``Non-greedy'' Regexp Operators
+
+@strong{FIXME:} Write me.
 
 @node Bracket Expressions
 @section Using Bracket Expressions
