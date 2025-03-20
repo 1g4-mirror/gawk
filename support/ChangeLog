@@ -1,3 +1,8 @@
+2025-03-20         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* Makefile.am: Don't set CFLAGS directly. Thanks to
+	"Jannick" <thirdedition@gmx.net> for the report.
+
 2025-03-12         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* minrx.h, minrx.cpp: Updated.
