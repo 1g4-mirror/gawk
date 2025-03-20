@@ -1,3 +1,7 @@
+2025-03-20         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* gawk.texi: Start documenting shortest match operators.
+
 2025-03-20         Thérèse Godefroy	 <godef.th@free.fr>
 
 	* gawk_api-figure1.jpg, gawk_api-figure1.pdf, gawk_api-figure1.png,
