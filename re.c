@@ -336,6 +336,8 @@ make_regexp(const char *s, size_t len, bool ignorecase, bool dfa, bool canfatal)
 
 		if (syn == RE_SYNTAX_GNU_AWK)
 			flags |= (MINRX_REG_EXTENSIONS_GNU | MINRX_REG_EXTENSIONS_BSD);
+		else if (syn == RE_SYNTAX_AWK)
+			flags |= MINRX_REG_MINDISABLE;
 
 		if ((ret = minrx_regncomp(& rp->mre_pat, len, buf, flags)) != 0) {
 			/* rerr already gettextized inside regex routines */
