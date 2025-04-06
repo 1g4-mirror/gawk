@@ -1310,6 +1310,8 @@ EXTRA_DIST = \
 	shadow.ok \
 	shadowbuiltin.awk \
 	shadowbuiltin.ok \
+	shortest-match.awk \
+	shortest-match.ok \
 	sigpipe1.awk \
 	sigpipe1.ok \
 	sort1.awk \
@@ -1549,7 +1551,7 @@ CLEANFILES = core core.* fmtspcl.ok
 
 # try to keep these sorted. each letter starts a new line
 BASIC_TESTS = \
-	regexpuparrow \
+	regexpuparrow shortest-match \
 	addcomma anchgsub anchor argarray argcasfile arrayind1 arrayind2 \
 	arrayind3 arrayparm arrayprm2 arrayprm3 arrayref arrymem1 \
 	arryref2 arryref3 arryref4 arryref5 arynasty arynocls aryprm1 \

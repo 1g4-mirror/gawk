@@ -1,3 +1,8 @@
+2025-04-06         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* Makefile.am (EXTRADIST): New test, shortest-match.
+	* shortest-match.awk, shortest-match.ok: New files.
+
 2025-04-02         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* badargs.ok: Adjusted.
