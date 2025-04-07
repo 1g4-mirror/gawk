@@ -430,7 +430,6 @@
 	* io.c (srcopen): Ditto.
 	* main.c (main): Ditto.
 	* profile.c (print_include_list): Ditto.
->>>>>>> master
 
 2024-07-28         Arnold D. Robbins     <arnold@skeeve.com>
 
