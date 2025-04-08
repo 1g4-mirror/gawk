@@ -47,6 +47,7 @@
 #include <tuple>
 #include <vector>
 #include <langinfo.h>
+#define CHARSET	1
 #ifdef CHARSET
 #include <memory>
 #include "charset.h"

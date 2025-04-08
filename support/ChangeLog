@@ -1,3 +1,7 @@
+2025-04-08         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* minrx.cpp: Reenable use of charset routines.
+
 2025-04-06         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* minrx.h, minrx.cpp: Updated.
