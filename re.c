@@ -456,9 +456,6 @@ research(Regexp *rp, char *str, int start,
 			minrx_flags |= MINRX_REG_RESUME;
 		}
 
-		if (! need_start)
-			minrx_flags |= MINRX_REG_NOSUB;
-
 		res = minrx_regnexec(&(rp->mre_pat),
 				len, str,
 				need_start ? rp->mre_pat.re_nsub + 1 : 1,
