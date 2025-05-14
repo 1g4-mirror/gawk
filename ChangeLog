@@ -1,3 +1,11 @@
+2025-05-14         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* awk.h [RE_NEED_SUB]: New flag for if need submatch info.
+	* builtin.c (do_sub, do_match): Use it when needed.
+	* re.c (research): For MinRX, adjust match_count value based
+	on RE_NEED_SUB and RE_NEED_START. Allows for evenutal
+	optimizations within MinRX.
+
 2025-05-06         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* re.c (research): Undo previous change. MINRX_REG_NOSUB

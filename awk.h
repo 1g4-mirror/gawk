@@ -206,7 +206,8 @@ extern int re_numsubpats(Regexp *rp, const char *s);
 /* regexp matching flags: */
 #define RE_NO_FLAGS	0	/* empty flags */
 #define RE_NEED_START	1	/* need to know start/end of match */
-#define RE_NO_BOL	2	/* not allowed to match ^ in regexp */
+#define RE_NEED_SUB	2	/* need submatch start/end info */
+#define RE_NO_BOL	4	/* not allowed to match ^ in regexp */
 
 #include "gawkapi.h"
 

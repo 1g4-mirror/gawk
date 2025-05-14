@@ -1610,7 +1610,7 @@ do_match(int nargs)
 	if (do_lint && (fixtype(t1)->flags & (STRING|USER_INPUT)) == 0)
 		lintwarn(_("%s: received non-string first argument"), "match");
 
-	rstart = research(rp, t1->stptr, 0, t1->stlen, RE_NEED_START);
+	rstart = research(rp, t1->stptr, 0, t1->stlen, RE_NEED_START|RE_NEED_SUB);
 	if (rstart >= 0) {	/* match succeded */
 		size_t *wc_indices = NULL;
 
@@ -1822,6 +1822,7 @@ do_sub(int nargs, unsigned int flags)
 	long current;
 	bool lastmatchnonzero;
 	char *mb_indices = NULL;
+	int searchflags = RE_NEED_START;
 
 	if ((flags & GENSUB) != 0) {
 		double d;
@@ -1856,6 +1857,7 @@ do_sub(int nargs, unsigned int flags)
 			}
 		}
 		DEREF(glob_flag);
+		searchflags |= RE_NEED_SUB;
 	} else {
 		if ((flags & GSUB) != 0) {
 			check_exact_args(nargs, "gsub", 3);
@@ -1887,7 +1889,7 @@ do_sub(int nargs, unsigned int flags)
 	decr_sp();		/* regexp, already updated above */
 
 	/* do the search early to avoid work on non-match */
-	if (research(rp, target->stptr, 0, target->stlen, RE_NEED_START) == -1 ||
+	if (research(rp, target->stptr, 0, target->stlen, searchflags) == -1 ||
 			RESTART(rp, target->stptr) > target->stlen)
 		goto done;
 

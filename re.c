@@ -383,12 +383,14 @@ research(Regexp *rp, char *str, int start,
 {
 	const char *ret = str;
 	bool try_backref = false;
-	int need_start;
-	int no_bol;
+	bool need_start;
+	bool no_bol;
+	bool need_sub;
 	int res;
 	int minrx_flags = 0;
 
 	need_start = ((flags & RE_NEED_START) != 0);
+	need_sub = ((flags & RE_NEED_SUB) != 0);
 	no_bol = ((flags & RE_NO_BOL) != 0);
 
 	if (use_gnu_matchers) {
@@ -446,6 +448,13 @@ research(Regexp *rp, char *str, int start,
 
 		rp->pat.not_bol = 0;
 	} else {
+		int match_count = 0;
+
+		if (need_sub)
+			match_count = rp->mre_pat.re_nsub + 1;
+		else if (need_start)
+			match_count = 1;
+
 		if (no_bol)
 			minrx_flags |= MINRX_REG_NOTBOL;
 
@@ -458,7 +467,7 @@ research(Regexp *rp, char *str, int start,
 
 		res = minrx_regnexec(&(rp->mre_pat),
 				len, str,
-				need_start ? rp->mre_pat.re_nsub + 1 : 1,
+				match_count,
 				rp->mre_regs,
 				minrx_flags);
 		if (res == 0)
