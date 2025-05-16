@@ -1,3 +1,12 @@
+2025-05-16         Arnold D. Robbins     <arnold@skeeve.com>
+
+	Make sure all non-standard variables are unavailable
+	with --traditional.  Thanks to Andrew Schorr for the push.
+
+	* io.c (get_a_record): Don't mess with RT if do_traditional.
+	* main.c (init_vars): Don't install non-standard variables.
+	* NEWS: Updated.
+
 2025-05-14         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* awk.h [RE_NEED_SUB]: New flag for if need submatch info.
