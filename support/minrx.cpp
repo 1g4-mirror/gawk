@@ -47,7 +47,6 @@
 #include <tuple>
 #include <vector>
 #include <langinfo.h>
-#define CHARSET	1
 #ifdef CHARSET
 #include <memory>
 #include "charset.h"
@@ -927,8 +926,8 @@ struct Compile {
 		for (k = 1; k < m; ++k)
 			lhs.insert(lhs.end(), rhs.begin(), rhs.end());
 		if (n != (NInt) -1 && k < n) {
-			lhmaxstk += 1;
-			rhmaxstk += 1;
+			lhmaxstk += 2;
+			rhmaxstk += 2;
 			for (auto &r : rhs)
 				r.nstk += 2;
 			auto rhsize = rhs.size();
