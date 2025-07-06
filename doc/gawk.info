@@ -32739,6 +32739,11 @@ Windows32 versions.  A list of targets is printed if the ‘make’ command
 is given without a target.  As an example, to build a native MS-Windows
 binary of ‘gawk’ using the MinGW tools, type ‘make mingw32’.
 
+   If you are building with MinGW using anything other than
+‘pc/Makefile’, be sure to pass the ‘-D__USE_MINGW_ANSI_STDIO’
+command-line option to GCC. This is necessary for correct operation of
+Gawk on Windows, in particular for displaying translated messages.
+
 
 File: gawk.info,  Node: PC Using,  Next: Cygwin,  Prev: PC Compiling,  Up: PC Installation
 
@@ -41097,55 +41102,55 @@ Node: Non-Unix Installation1364070
 Node: PC Installation1364546
 Node: PC Binary Installation1365415
 Node: PC Compiling1366308
-Node: PC Using1367486
-Node: Cygwin1371202
-Node: MSYS1372455
-Node: OpenVMS Installation1373081
-Node: OpenVMS Compilation1373762
-Ref: OpenVMS Compilation-Footnote-11375312
-Node: OpenVMS Dynamic Extensions1375370
-Node: OpenVMS Installation Details1377015
-Node: OpenVMS Running1379446
-Node: OpenVMS GNV1383583
-Node: Bugs1384338
-Node: Bug definition1385258
-Node: Bug address1388860
-Node: Usenet1392429
-Node: Performance bugs1393642
-Node: Asking for help1396646
-Node: Maintainers1398633
-Node: Other Versions1399660
-Node: Installation summary1409728
-Node: Notes1411110
-Node: Compatibility Mode1411920
-Node: Additions1412742
-Node: Accessing The Source1413687
-Node: Adding Code1415220
-Node: New Ports1422331
-Node: Derived Files1426834
-Ref: Derived Files-Footnote-11432645
-Ref: Derived Files-Footnote-21432680
-Ref: Derived Files-Footnote-31433291
-Node: Future Extensions1433405
-Node: Implementation Limitations1434075
-Node: Extension Design1435317
-Node: Old Extension Problems1436477
-Ref: Old Extension Problems-Footnote-11438049
-Node: Extension New Mechanism Goals1438110
-Ref: Extension New Mechanism Goals-Footnote-11441580
-Node: Extension Other Design Decisions1441781
-Node: Extension Future Growth1443978
-Node: Notes summary1444598
-Node: Basic Concepts1445808
-Node: Basic High Level1446493
-Ref: figure-general-flow1446775
-Ref: figure-process-flow1447477
-Ref: Basic High Level-Footnote-11450847
-Node: Basic Data Typing1451036
-Node: Glossary1454444
-Node: Copying1487326
-Node: GNU Free Documentation License1524884
-Node: Index1550007
+Node: PC Using1367755
+Node: Cygwin1371471
+Node: MSYS1372724
+Node: OpenVMS Installation1373350
+Node: OpenVMS Compilation1374031
+Ref: OpenVMS Compilation-Footnote-11375581
+Node: OpenVMS Dynamic Extensions1375639
+Node: OpenVMS Installation Details1377284
+Node: OpenVMS Running1379715
+Node: OpenVMS GNV1383852
+Node: Bugs1384607
+Node: Bug definition1385527
+Node: Bug address1389129
+Node: Usenet1392698
+Node: Performance bugs1393911
+Node: Asking for help1396915
+Node: Maintainers1398902
+Node: Other Versions1399929
+Node: Installation summary1409997
+Node: Notes1411379
+Node: Compatibility Mode1412189
+Node: Additions1413011
+Node: Accessing The Source1413956
+Node: Adding Code1415489
+Node: New Ports1422600
+Node: Derived Files1427103
+Ref: Derived Files-Footnote-11432914
+Ref: Derived Files-Footnote-21432949
+Ref: Derived Files-Footnote-31433560
+Node: Future Extensions1433674
+Node: Implementation Limitations1434344
+Node: Extension Design1435586
+Node: Old Extension Problems1436746
+Ref: Old Extension Problems-Footnote-11438318
+Node: Extension New Mechanism Goals1438379
+Ref: Extension New Mechanism Goals-Footnote-11441849
+Node: Extension Other Design Decisions1442050
+Node: Extension Future Growth1444247
+Node: Notes summary1444867
+Node: Basic Concepts1446077
+Node: Basic High Level1446762
+Ref: figure-general-flow1447044
+Ref: figure-process-flow1447746
+Ref: Basic High Level-Footnote-11451116
+Node: Basic Data Typing1451305
+Node: Glossary1454713
+Node: Copying1487595
+Node: GNU Free Documentation License1525153
+Node: Index1550276
 
 End Tag Table
 
