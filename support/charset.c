@@ -3568,7 +3568,7 @@ is_found(const charset_t *set, int32_t the_char)
 	key.start = key.end = the_char;
 	
 	size_t nelems = set->nelems;
-	if (the_char < 128 && set->nelems8bit < set->nelems)
+	if (the_char < 256 && set->nelems8bit < set->nelems)
 		nelems = set->nelems8bit;
 	
 	found = bsearch(& key, set->items, nelems,
@@ -3672,7 +3672,7 @@ charset_finalize(charset_t *set)
 	}
 	set->nelems8bit = set->nelems;
 	for (int i = 0; i < set->nelems; i++) {
-		if (set->items[i].start >= 128 && i > 0) {
+		if (set->items[i].start >= 256 && i > 0) {
 			set->nelems8bit = i;	// this is a count, not an index
 			break;
 		}
