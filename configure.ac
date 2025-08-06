@@ -107,7 +107,6 @@ AC_PROG_EGREP
 AC_PROG_YACC
 AC_PROG_LN_S
 AC_PROG_CC
-AC_PROG_CXX
 AC_C_VARARRAYS
 AC_PROG_CPP
 AC_PROG_RANLIB
@@ -151,13 +150,6 @@ else
 fi
 
 AC_SUBST(CFLAGS)
-
-if test -f $srcdir/support/minrx.h && test -f $srcdir/support/minrx.cpp
-then
-	CXXFLAGS='-O3 -std=c++20'
-fi
-
-AC_SUBST(CXXFLAGS)
 
 # shared library suffix for dynamic loading:
 AC_SUBST(acl_shlibext)
@@ -522,7 +514,7 @@ EOF
 	for i in . support extension
 	do
 		sed -e '/-O2/s///' -e '/^CFLAGS = /s//&${DEBUG} /' \
-		-e '/^CXXFLAGS = /s//&${DEBUG} /' $i/Makefile > foo
+			$i/Makefile > foo
 		mv foo $i/Makefile
 	done
 elif test "$GCC" = yes

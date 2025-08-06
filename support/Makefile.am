@@ -64,7 +64,7 @@ libsupport_a_SOURCES = \
 	libc-config.h \
 	localeinfo.c \
 	localeinfo.h \
-	minrx.cpp \
+	minrx.c \
 	minrx.h \
 	random.c \
 	random.h \
@@ -83,8 +83,6 @@ if USE_PERSISTENT_MALLOC
 libsupport_a_SOURCES += pma.c pma.h
 AM_CFLAGS += -DNDEBUG
 endif
-
-CXXFLAGS = @CXXFLAGS@
 
 # For some make's, e.g. OpenBSD, that don't define this
 RM = rm -f

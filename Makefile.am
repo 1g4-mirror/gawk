@@ -30,8 +30,6 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = @CFLAGS@
 AM_LDFLAGS = @LDFLAGS@
 
-CCLD = $(CXX)	# temporary, until minrx is rewritten in C
-
 # Stuff to include in the dist that doesn't need it's own
 # Makefile.am files
 EXTRA_DIST = \

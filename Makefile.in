@@ -223,6 +223,7 @@ AM_V_CC = $(am__v_CC_@AM_V@)
 am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
+CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
@@ -356,9 +357,6 @@ CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CSCOPE = @CSCOPE@
 CTAGS = @CTAGS@
-CXX = @CXX@
-CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = -DDEFPATH=$(DEFPATH) -DDEFLIBPATH=$(DEFLIBPATH) -DSHLIBEXT=$(SHLIBEXT) -DHAVE_CONFIG_H -DGAWK -DLOCALEDIR='"$(datadir)/locale"' -I"$(srcdir)/support"
 DEPDIR = @DEPDIR@
@@ -426,7 +424,6 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
-ac_ct_CXX = @ac_ct_CXX@
 acl_shlibext = @acl_shlibext@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
@@ -482,7 +479,6 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = @CFLAGS@
 AM_LDFLAGS = @LDFLAGS@
-CCLD = $(CXX)	# temporary, until minrx is rewritten in C
 
 # Stuff to include in the dist that doesn't need it's own
 # Makefile.am files
