@@ -113,6 +113,9 @@ minrx_regnexec(minrx_regex_t *rx, size_t ns, const char *s, size_t nm, minrx_reg
 void
 minrx_regfree(minrx_regex_t *rx)
 {
+	if (rx == NULL || rx->re_regexp == NULL)
+		return;
+
 	struct fake *fake = (struct fake *) rx->re_regexp;
 	fake->pat.translate = NULL;
 	regfree(& fake->pat);
