@@ -60,8 +60,8 @@ minrx_regncomp(minrx_regex_t *rx, size_t ns, const char *s, int flags)
 			fake->pat.translate = (RE_TRANSLATE_TYPE) casetable;
 		}
 	} else {
-		syn &= ~RE_ICASE;
 		fake->pat.translate = NULL;
+		syn &= ~RE_ICASE;
 	}
 
 	(void) re_set_syntax(syn);
@@ -90,12 +90,12 @@ minrx_regnexec(minrx_regex_t *rx, size_t ns, const char *s, size_t nm, minrx_reg
 	if (not_bol)
 		fake->pat.not_bol = 1;
 
-	if (rm != NULL && rm[0].rm_eo > 0)
+	if ((flags & MINRX_REG_RESUME) != 0 && rm != NULL && rm[0].rm_eo > 0)
 		start = rm[0].rm_eo;
 
 	res = re_search(&(fake->pat), s, start + ns, start, ns, rm != NULL ? & fake->regs : NULL);
 
-	if (res > 0)
+	if (res >= 0)
 		res = 0;
 
 	fake->pat.not_bol = 0;
