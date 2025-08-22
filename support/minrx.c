@@ -406,7 +406,8 @@ static minrx_result_t cset_parse(CSet charset, minrx_regcomp_flags_t flags, Enco
 
 typedef struct {
 	bool bytes[256];
-	char firstunique;	// set to '\0' if there isn't a first unique one, no std::<optional> in C
+	bool present;		// true if firstunique is set
+	short firstunique;
 } FirstUnique;
 
 static FirstUnique fu_make(const bool fb[MAX_FIRSTBYTES])
@@ -415,13 +416,17 @@ static FirstUnique fu_make(const bool fb[MAX_FIRSTBYTES])
 	FirstUnique result;
 
 	memcpy(result.bytes, fb, MAX_FIRSTBYTES);
-	result.firstunique = '\0';
+	result.firstunique = -1;
+	result.present = false;
 
 	for (int i = 0; i < MAX_FIRSTBYTES; ++i)
 		if (fb[i])
 			++n, u = i;
-	if (n == 1)
+
+	if (n == 1) {
+		result.present = true;
 		result.firstunique = u;
+	}
 
 	return result;
 }
