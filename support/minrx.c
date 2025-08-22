@@ -449,14 +449,111 @@ static FirstUnique cset_firstbytes(CSet charset, Encoding e)
 	return result;
 }
 
+/////////////////// QSet struct and functions //////////////////
+
+typedef struct QSet {
+	uint64_t *bits[10];
+	uint64_t bits0;
+	uint64_t *bitsfree;
+	int depth;
+} QSet;
+
+static QSet *qset_make(size_t limit)
+{
+	QSet *qset = (QSet *) calloc(1, sizeof(QSet));
+
+	if (qset == NULL)
+		return NULL;
+
+	size_t s[10], t = 0;
+	do
+		t += (limit = s[qset->depth++] = (limit + 63u) / 64u);
+	while (limit > 1);
+
+	uint64_t *next = qset->bitsfree = (uint64_t *) malloc(t * sizeof(uint64_t));
+	if (next == NULL) {
+		free(qset);
+		return NULL;
+	}
+
+	qset->bits[0] = & qset->bits0;
+	for (int i = 1; i < qset->depth; ++i)
+		qset->bits[i] = next, next += s[qset->depth - 1 - i];
+	qset->bits0 = 0;
+
+	return qset;
+}
+
+static INLINE void qset_free(QSet *qset) { if (qset->bitsfree) free(qset->bitsfree); }
+
+static INLINE uint64_t bit(size_t k) { return (uint64_t) 1 << (k & 0x3F); }
+
+static INLINE bool qset_empty(QSet *qset) { return ! qset->bits0; }
+
+static INLINE bool qset_contains(const QSet *const qset, size_t k)
+{
+	int i = 0, s = 6 * qset->depth;
+	size_t j = 0;
+	while (i < qset->depth) {
+		uint64_t x = qset->bits[i++][j];
+		s -= 6;
+		j = k >> s;
+		uint64_t w = bit(j);
+		if (!(x & w))
+			return false;
+	}
+	return true;
+}
+
+static INLINE bool qset_insert(QSet *qset, size_t k)
+{
+	bool r = false;
+	int i = 0, s = 6 * qset->depth;
+	size_t j = 0;
+	while (i < qset->depth) {
+		int64_t *bp = & qset->bits[i++][j];
+		int64_t x = *bp;
+		s -= 6;
+		j = k >> s;
+		int64_t w = bit(j);
+		if ((x & w) == 0) {
+			if (i < qset->depth)
+				 qset->bits[i][j] = 0;
+			else
+				r = true;
+		}
+		*bp = x | w;
+	}
+	return r;
+}
+
+// FIXME: Not sure this is exactly the right way to do this...
+#define CTZ(x)	(sizeof(unsigned long long) == 8 ? __builtin_ctzll(x) : __builtin_ctzl(x))
+
+static INLINE size_t qset_remove(QSet *qset)
+{
+	// caller must ensure !empty()
+	size_t k = 0;
+	int i = 0, d = qset->depth;
+	do
+		k = (k << 6) | CTZ(qset->bits[i++][k]);
+	while (i != d);
+	size_t r = k;
+	do {
+		--i;
+		uint64_t w = bit(k);
+		k >>= 6;
+		if ((qset->bits[i][k] &= ~w) != 0)
+			break;
+	} while (i != 0);
+	return r;
+}
+
 #if 0
 
 
 namespace MinRX {
 
-template <typename UINT> auto ctz(UINT x) { return __builtin_ctz(x); }
-template <> auto ctz(unsigned long x) { return __builtin_ctzl(x); }
-template <> auto ctz(unsigned long long x) { return __builtin_ctzll(x); }
 
 template <typename TYPE, TYPE INIT = 0>
 struct COWVec {
@@ -569,76 +666,6 @@ struct COWVec {
 	}
 };
 
-template <typename UINT>
-struct QSet {
-	std::uint64_t *bits[10];
-	std::uint64_t bits0;
-	std::uint64_t *bitsfree = nullptr;
-	int depth = 0;
-	QSet(UINT limit) {
-		std::size_t s[10], t = 0;
-		do
-			t += (limit = s[depth++] = (limit + 63u) / 64u);
-		while (limit > 1);
-		std::uint64_t *next = bitsfree = (std::uint64_t *) ::operator new(t * sizeof (std::uint64_t));
-		bits[0] = &bits0;
-		for (int i = 1; i < depth; ++i)
-			bits[i] = next, next += s[depth - 1 - i];
-		bits0 = 0;
-	}
-	~QSet() { if (bitsfree) ::operator delete(bitsfree); }
-	static std::uint64_t bit(UINT k) { return (std::uint64_t) 1 << (k & 0x3F); }
-	bool empty() const { return !bits0; }
-	bool contains(UINT k) const {
-		int i = 0, s = 6 * depth;
-		UINT j = 0;
-		while (i < depth) {
-			auto x = bits[i++][j];
-			s -= 6;
-			j = k >> s;
-			auto w = bit(j);
-			if (!(x & w))
-				return false;
-		}
-		return true;
-	}
-	bool insert(UINT k) {
-		bool r = false;
-		int i = 0, s = 6 * depth;
-		UINT j = 0;
-		while (i < depth) {
-			auto bp = &bits[i++][j];
-			auto x = *bp;
-			s -= 6;
-			j = k >> s;
-			auto w = bit(j);
-			if ((x & w) == 0) {
-				if (i < depth)
-					bits[i][j] = 0;
-				else
-					r = true;
-			}
-			*bp = x | w;
-		}
-		return r;
-	}
-	UINT remove() { // caller must ensure !empty()
-		UINT k = 0;
-		int i = 0, d = depth;
-		do
-			k = (k << 6) | ctz(bits[i++][k]);
-		while (i != d);
-		UINT r = k;
-		do {
-			--i;
-			auto w = bit(k);
-			k >>= 6;
-			if ((bits[i][k] &= ~w) != 0)
-				break;
-		} while (i != 0);
-		return r;
-	}
-};
 
 template <typename UINT, typename DATA>
 struct QVec {
@@ -1565,12 +1592,12 @@ minrx_regexec(minrx_regex_t *rx, const char *s, std::size_t nm, minrx_regmatch_t
 int
 minrx_regncomp(minrx_regex_t *rx, std::size_t ns, const char *s, int flags)
 {
-	auto enc = MinRX::WConv::Encoding::MBtoWC;
-	auto loc = std::setlocale(LC_CTYPE, nullptr);
-	if ((std::strcmp(loc, "C") == 0 || (flags & MINRX_REG_NATIVE1B) != 0) && MB_CUR_MAX == 1)
-		enc = MinRX::WConv::Encoding::Byte;
-	else if (std::strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
-		enc = MinRX::WConv::Encoding::UTF8;
+	auto enc = Encoding_MBtoWC;
+	auto loc = setlocale(LC_CTYPE, nullptr);
+	if ((strcmp(loc, "C") == 0 || (flags & MINRX_REG_NATIVE1B) != 0) && MB_CUR_MAX == 1)
+		enc = Encoding_Byte;
+	else if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
+		enc = Encoding_UTF8;
 	auto r = MinRX::Compile(enc, s, s + ns, (minrx_regcomp_flags_t) flags).compile();
 	rx->re_regexp = r;
 	rx->re_nsub = r->nsub - 1;
