@@ -25,7 +25,6 @@
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// #include <stdio.h>
 #include <ctype.h>
 #include <langinfo.h>
 #include <limits.h>
@@ -71,7 +70,7 @@ enum {
 	WCharMax = 0x10FFFF,	// maximum code point: valid for Unicode and (FIXME!) blithely assumed for non-Unicode
 	WConv_End = -1,
 };
-typedef enum Encoding { Byte, MBtoWC, UTF8 } Encoding;
+typedef enum Encoding { Encoding_Byte, Encoding_MBtoWC, Encoding_UTF8 } Encoding;
 
 typedef struct WConv {
 	WChar (*nextfn)();
@@ -81,14 +80,14 @@ typedef struct WConv {
 	mbstate_t mbs;
 } WConv;
 
-static size_t wc_off(WConv *this) { return this->cp - this->bp; }
-static char *wc_ptr(WConv *this) { return this->cp; }
-static char *wc_save(WConv *this) { return this->cp; }
-static void wc_restore(WConv *this, const char *p) { this->cp = (char *) p; }
+static INLINE size_t wc_off(WConv *this) { return this->cp - this->bp; }
+static INLINE char *wc_ptr(WConv *this) { return this->cp; }
+static INLINE char *wc_save(WConv *this) { return this->cp; }
+static INLINE void wc_restore(WConv *this, const char *p) { this->cp = (char *) p; }
 
-static WChar wc_nextchr(WConv *this) { return (*(this->nextfn))(); }
-static WChar wc_nextbyte(WConv *this) { return this->cp != this->ep ? (unsigned char) *(this->cp++) : (WChar) WConv_End; }
-static WChar wc_lookahead(WConv *this) { return wc_nextchr(this); }
+static INLINE WChar wc_nextchr(WConv *this) { return (*(this->nextfn))(); }
+static INLINE WChar wc_nextbyte(WConv *this) { return this->cp != this->ep ? (unsigned char) *(this->cp++) : (WChar) WConv_End; }
+static INLINE WChar wc_lookahead(WConv *this) { return wc_nextchr(this); }
 
 static WChar wc_nextmbtowc(WConv *this)
 {
@@ -177,51 +176,55 @@ static INLINE WConv *wc_make(Encoding e, const char *bp)
 
 typedef charset_t *CSet;
 
-static CSet cset_create(Encoding enc)
+static INLINE CSet cset_create(Encoding enc)
 {
 	int errcode = 0;
 	CSet charset;
 
-	charset = charset_create(& errcode, MB_CUR_MAX, enc == UTF8);
+	charset = charset_create(& errcode, MB_CUR_MAX, enc == Encoding_UTF8);
 
 	return charset;
 }
 
-static CSet cset_merge(CSet lhs, CSet rhs)
+static INLINE CSet cset_merge(CSet lhs, CSet rhs)
 {
 	charset_merge(lhs, rhs);
 
 	return lhs;
 }
 
-static void cset_free(CSet charset) { if (charset) { charset_free(charset); } }
+static INLINE void cset_free(CSet charset) { if (charset) { charset_free(charset); } }
 
-static CSet cset_invert(CSet charset)
+static INLINE CSet cset_invert(CSet charset)
 {
 	int errcode = 0;
+
 	charset_t *newset = charset_invert(charset, &errcode); // FIXME: no error checking
 	charset_free(charset);
+
 	return newset;
 }
 
-static CSet cset_set(CSet charset, WChar wclo, WChar wchi)
+static INLINE CSet cset_set(CSet charset, WChar wclo, WChar wchi)
 {
 	charset_add_range(charset, wclo, wchi);	// FIXME: no error checking
+
 	return charset;
 }
 
-static CSet cset_setone(CSet charset, WChar wc)
+static INLINE CSet cset_setone(CSet charset, WChar wc)
 {
 	charset_add_char(charset, wc);	// FIXME: no error checking
+
 	return charset;
 }
 
-bool cset_test(CSet charset, WChar wc)
+static INLINE bool cset_test(CSet charset, WChar wc)
 {
 	return charset_in_set(charset, wc);
 }
 
-bool cset_cclass(CSet charset, minrx_regcomp_flags_t flags, Encoding enc, const char *name)
+static INLINE bool cset_cclass(CSet charset, minrx_regcomp_flags_t flags, Encoding enc, const char *name)
 {
 	int result = charset_add_cclass(charset, name);
 	if ((flags & MINRX_REG_ICASE) != 0) {
@@ -247,7 +250,7 @@ static const char *temp_string(const char *bp, const char *ep)
 	return buffer;
 }
 
-static void cset_add_equiv(CSet charset, int32_t equiv)
+static INLINE void cset_add_equiv(CSet charset, int32_t equiv)
 {
 	wchar_t wcs_in[2];
 	wchar_t wcs[2];
@@ -265,7 +268,7 @@ static void cset_add_equiv(CSet charset, int32_t equiv)
 	}
 }
 
-static unsigned int utfprefix(WChar wc)
+static INLINE unsigned int utfprefix(WChar wc)
 {
 	if (wc < 0x80)
 		return wc;
@@ -383,8 +386,8 @@ static minrx_result_t cset_parse(CSet charset, minrx_regcomp_flags_t flags, Enco
 			cset_set(charset, wclo, wchi);
 			if ((flags & MINRX_REG_ICASE) != 0) {
 				for (WChar wc = wclo; wc <= wchi; ++wc) {
-					cset_setone(charset, enc == Byte ? tolower(wc) : towlower(wc));
-					cset_setone(charset, enc == Byte ? toupper(wc) : towupper(wc));
+					cset_setone(charset, enc == Encoding_Byte ? tolower(wc) : towlower(wc));
+					cset_setone(charset, enc == Encoding_Byte ? toupper(wc) : towupper(wc));
 				}
 			}
 		}
@@ -399,41 +402,49 @@ static minrx_result_t cset_parse(CSet charset, minrx_regcomp_flags_t flags, Enco
 	return MINRX_REG_SUCCESS;
 }
 
-#if 0
-struct CSet {
-	charset_t *charset = nullptr;
-	std::pair<std::optional<const std::array<bool, 256>>, std::optional<char>>
-	firstbytes(WConv::Encoding e) const {
-		std::array<bool, 256> fb = {};
-		auto firstunique = [](const std::array<bool, 256> &fb) -> std::optional<char> {
-			int n = 0, u = -1;
-			for (int i = 0; i < 256; ++i)
-				if (fb[i])
-					++n, u = i;
-			return n == 1 ? std::optional<char>(u) : std::optional<char>();
-		};
-		switch (e) {
-		case WConv::Encoding::Byte:
-		{
-			int errcode = 0;
-			charset_firstbytes_t bytes = charset_firstbytes(charset, &errcode);
-			for (int i = 0; i < MAX_FIRSTBYTES; i++)
-				fb[i] = bytes.bytes[i];
-		}
-			return {fb, firstunique(fb)};
-		case WConv::Encoding::UTF8:
-		{
-			int errcode = 0;
-			charset_firstbytes_t bytes = charset_firstbytes(charset, &errcode);
-			for (int i = 0; i < MAX_FIRSTBYTES; i++)
-				fb[i] = bytes.bytes[i];
-		}
-			return {fb, firstunique(fb)};
-		default:
-			return {{}, {}};
-		}
+// First Unique stuff...
+
+typedef struct {
+	bool bytes[256];
+	char firstunique;	// set to '\0' if there isn't a first unique one, no std::<optional> in C
+} FirstUnique;
+
+static FirstUnique fu_make(const bool fb[MAX_FIRSTBYTES])
+{
+	int n = 0, u = -1;
+	FirstUnique result;
+
+	memcpy(result.bytes, fb, MAX_FIRSTBYTES);
+	result.firstunique = '\0';
+
+	for (int i = 0; i < MAX_FIRSTBYTES; ++i)
+		if (fb[i])
+			++n, u = i;
+	if (n == 1)
+		result.firstunique = u;
+
+	return result;
+}
+
+static FirstUnique cset_firstbytes(CSet charset, Encoding e)
+{
+	FirstUnique result = { { '\0', }, '\0' };
+	int errcode = 0;
+	charset_firstbytes_t bytes;
+
+	switch (e) {
+	case Encoding_Byte:
+	case Encoding_UTF8:
+		bytes = charset_firstbytes(charset, & errcode);
+		result = fu_make(bytes.bytes);
+		break;
+	default:
+		break;
 	}
-};
+	return result;
+}
+
+#if 0
 
 
 namespace MinRX {
