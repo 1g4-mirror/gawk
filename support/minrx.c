@@ -43,9 +43,7 @@
 #include "minrx.h"
 
 #ifdef __GNUC__
-#define INLINE __attribute__((__always_inline__)) inline
-#else
-#define INLINE inline
+#define inline __attribute__((__always_inline__)) inline
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -80,14 +78,14 @@ typedef struct WConv {
 	mbstate_t mbs;
 } WConv;
 
-static INLINE size_t wc_off(WConv *this) { return this->cp - this->bp; }
-static INLINE char *wc_ptr(WConv *this) { return this->cp; }
-static INLINE char *wc_save(WConv *this) { return this->cp; }
-static INLINE void wc_restore(WConv *this, const char *p) { this->cp = (char *) p; }
+static inline size_t wc_off(WConv *this) { return this->cp - this->bp; }
+static inline char *wc_ptr(WConv *this) { return this->cp; }
+static inline char *wc_save(WConv *this) { return this->cp; }
+static inline void wc_restore(WConv *this, const char *p) { this->cp = (char *) p; }
 
-static INLINE WChar wc_nextchr(WConv *this) { return (*(this->nextfn))(); }
-static INLINE WChar wc_nextbyte(WConv *this) { return this->cp != this->ep ? (unsigned char) *(this->cp++) : (WChar) WConv_End; }
-static INLINE WChar wc_lookahead(WConv *this) { return wc_nextchr(this); }
+static inline WChar wc_nextchr(WConv *this) { return (*(this->nextfn))(); }
+static inline WChar wc_nextbyte(WConv *this) { return this->cp != this->ep ? (unsigned char) *(this->cp++) : (WChar) WConv_End; }
+static inline WChar wc_lookahead(WConv *this) { return wc_nextchr(this); }
 
 static WChar wc_nextmbtowc(WConv *this)
 {
@@ -167,7 +165,7 @@ static WConv *wc_make_n(Encoding e, const char *bp, const char *ep)
 	return wconv;
 }
 
-static INLINE WConv *wc_make(Encoding e, const char *bp)
+static inline WConv *wc_make(Encoding e, const char *bp)
 {
 	return wc_make_n(e, bp, bp + strlen(bp));
 }
@@ -176,7 +174,7 @@ static INLINE WConv *wc_make(Encoding e, const char *bp)
 
 typedef charset_t *CSet;
 
-static INLINE CSet cset_create(Encoding enc)
+static inline CSet cset_create(Encoding enc)
 {
 	int errcode = 0;
 	CSet charset;
@@ -186,16 +184,16 @@ static INLINE CSet cset_create(Encoding enc)
 	return charset;
 }
 
-static INLINE CSet cset_merge(CSet lhs, CSet rhs)
+static inline CSet cset_merge(CSet lhs, CSet rhs)
 {
 	charset_merge(lhs, rhs);
 
 	return lhs;
 }
 
-static INLINE void cset_free(CSet charset) { if (charset) { charset_free(charset); } }
+static inline void cset_free(CSet charset) { if (charset) { charset_free(charset); } }
 
-static INLINE CSet cset_invert(CSet charset)
+static inline CSet cset_invert(CSet charset)
 {
 	int errcode = 0;
 
@@ -205,26 +203,26 @@ static INLINE CSet cset_invert(CSet charset)
 	return newset;
 }
 
-static INLINE CSet cset_set(CSet charset, WChar wclo, WChar wchi)
+static inline CSet cset_set(CSet charset, WChar wclo, WChar wchi)
 {
 	charset_add_range(charset, wclo, wchi);	// FIXME: no error checking
 
 	return charset;
 }
 
-static INLINE CSet cset_setone(CSet charset, WChar wc)
+static inline CSet cset_setone(CSet charset, WChar wc)
 {
 	charset_add_char(charset, wc);	// FIXME: no error checking
 
 	return charset;
 }
 
-static INLINE bool cset_test(CSet charset, WChar wc)
+static inline bool cset_test(CSet charset, WChar wc)
 {
 	return charset_in_set(charset, wc);
 }
 
-static INLINE bool cset_cclass(CSet charset, minrx_regcomp_flags_t flags, Encoding enc, const char *name)
+static inline bool cset_cclass(CSet charset, minrx_regcomp_flags_t flags, Encoding enc, const char *name)
 {
 	int result = charset_add_cclass(charset, name);
 	if ((flags & MINRX_REG_ICASE) != 0) {
@@ -250,7 +248,7 @@ static const char *temp_string(const char *bp, const char *ep)
 	return buffer;
 }
 
-static INLINE void cset_add_equiv(CSet charset, int32_t equiv)
+static inline void cset_add_equiv(CSet charset, int32_t equiv)
 {
 	wchar_t wcs_in[2];
 	wchar_t wcs[2];
@@ -268,7 +266,7 @@ static INLINE void cset_add_equiv(CSet charset, int32_t equiv)
 	}
 }
 
-static INLINE unsigned int utfprefix(WChar wc)
+static inline unsigned int utfprefix(WChar wc)
 {
 	if (wc < 0x80)
 		return wc;
@@ -484,13 +482,13 @@ static QSet *qset_make(size_t limit)
 	return qset;
 }
 
-static INLINE void qset_free(QSet *qset) { if (qset->bitsfree) free(qset->bitsfree); }
+static inline void qset_free(QSet *qset) { if (qset->bitsfree) free(qset->bitsfree); }
 
-static INLINE uint64_t bit(size_t k) { return (uint64_t) 1 << (k & 0x3F); }
+static inline uint64_t bit(size_t k) { return (uint64_t) 1 << (k & 0x3F); }
 
-static INLINE bool qset_empty(QSet *qset) { return ! qset->bits0; }
+static inline bool qset_empty(QSet *qset) { return ! qset->bits0; }
 
-static INLINE bool qset_contains(const QSet *const qset, size_t k)
+static inline bool qset_contains(const QSet *const qset, size_t k)
 {
 	int i = 0, s = 6 * qset->depth;
 	size_t j = 0;
@@ -505,7 +503,7 @@ static INLINE bool qset_contains(const QSet *const qset, size_t k)
 	return true;
 }
 
-static INLINE bool qset_insert(QSet *qset, size_t k)
+static inline bool qset_insert(QSet *qset, size_t k)
 {
 	bool r = false;
 	int i = 0, s = 6 * qset->depth;
@@ -530,7 +528,7 @@ static INLINE bool qset_insert(QSet *qset, size_t k)
 // FIXME: Not sure this is exactly the right way to do this...
 #define CTZ(x)	(sizeof(unsigned long long) == 8 ? __builtin_ctzll(x) : __builtin_ctzl(x))
 
-static INLINE size_t qset_remove(QSet *qset)
+static inline size_t qset_remove(QSet *qset)
 {
 	// caller must ensure !empty()
 	size_t k = 0;
@@ -1281,7 +1279,7 @@ struct Execute {
 	const Node *nodes = r.nodes.data();
 	Execute(const Regexp &r, minrx_regexec_flags_t flags, const char *bp, const char *ep) : r(r), flags(flags), wconv(r.enc, bp, ep) {}
 	template <typename... XArgs>
-	INLINE
+	inline
 	void add(QVec<NInt, NState> &ncsv, NInt k, NInt nstk, const NState &ns, WChar wcnext, XArgs... xargs) {
 		const Node &n = nodes[k];
 		if (n.type <= Node::CSet) {
