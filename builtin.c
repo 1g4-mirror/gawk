@@ -2668,6 +2668,7 @@ nondec2awknum(char *str, size_t len, char **endptr)
 	char save;
 	short val;
 	char *start = str;
+	size_t savelen = len;
 
 	if (len >= 2 && *str == '0' && (str[1] == 'x' || str[1] == 'X')) {
 		/*
@@ -2710,6 +2711,12 @@ nondec2awknum(char *str, size_t len, char **endptr)
 			case 'F':
 				val = *str - 'A' + 10;
 				break;
+			case 'p':
+			case 'P':
+				// restore the string
+				str = start;
+				len = savelen;
+				goto floating_point_hex;
 			default:
 				if (endptr)
 					*endptr = str;
@@ -2739,6 +2746,7 @@ nondec2awknum(char *str, size_t len, char **endptr)
 			*endptr = str;
 	} else {
 decimal:
+floating_point_hex:
 		save = str[len];
 		str[len] = '\0';
 		retval = strtod(str, endptr);
