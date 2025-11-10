@@ -1,3 +1,7 @@
+2025-11-09         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* minrx.cpp: Updated.
+
 2025-10-19         Arnold D. Robbins     <arnold@skeeve.com>
 
 	* Makefile.am: Don't disable assertions anymore. They provide

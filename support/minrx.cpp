@@ -37,12 +37,9 @@
 #include <wctype.h>
 
 // ISO C++
-#include <array>
 #include <limits>
 #include <map>
-#include <mutex>
 #include <optional>
-#include <set>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -64,10 +61,8 @@
 #define N_(msgid) msgid
 
 // Arnold Robbins' charset library
-#ifdef CHARSET
 #include <memory>
 #include "charset.h"
-#endif
 
 #include "minrx.h"
 
@@ -683,8 +678,11 @@ wconv_restore(WConv *wc, const char *p)
 	wc->cp = p;
 }
 
+struct FirstBytes {
+	bool vec[256];
+};
+
 struct CSet {
-#ifdef CHARSET
 	charset_t *charset = nullptr;
 	CSet(WConv_Encoding enc) {
 		int errcode = 0;
@@ -700,85 +698,25 @@ struct CSet {
 		return *this;
 	}
 	~CSet() { if (charset) { charset_free(charset); charset = nullptr; } }
-#else
-	static std::map<std::string, CSet> cclmemo;
-	static std::mutex cclmutex;
-	struct Range {
-		Range(WChar x, WChar y): min(MIN(x, y)), max(MAX(x, y)) {}
-		WChar min, max;
-		int operator<=>(const Range &r) const {
-			return (min > r.max) - (max < r.min);
-		}
-	};
-	std::set<Range> ranges;
-	CSet(WConv_Encoding) { }
-	CSet &operator|=(const CSet &cs) {
-		for (const auto &e : cs.ranges)
-			set(e.min, e.max);
-		return *this;
-	}
-#endif
 	CSet &invert() {
-#ifdef CHARSET
 		int errcode = 0;
 		charset_t *newset = charset_invert(charset, &errcode); // FIXME: no error checking
 		charset_free(charset);
 		charset = newset;
-#else
-		std::set<Range> nranges;
-		WChar lo = 0;
-		for (const auto &e : ranges) {
-			if (lo < e.min)
-				nranges.emplace(lo, e.min - 1);
-			lo = e.max + 1;
-		}
-		if (lo <= WCharMax)
-			nranges.emplace(lo, WCharMax);
-		ranges = std::move(nranges);
-#endif
 		return *this;
 	}
 	CSet &set(WChar wclo, WChar wchi) {
-#ifdef CHARSET
 		charset_add_range(charset, wclo, wchi);	// FIXME: no error checking
-#else
-		auto e = Range(wclo - (wclo != std::numeric_limits<WChar>::min()), wchi + (wchi != std::numeric_limits<WChar>::max()));
-		auto [x, y] = ranges.equal_range(e);
-		if (x == y) {
-			ranges.insert(Range(wclo, wchi));
-		} else {
-			if (x->max >= e.min)
-				wclo = MIN(wclo, x->min);
-			auto z = y;
-			--z;
-			if (z->min <= e.max)
-				wchi = MAX(wchi, z->max);
-			auto i = ranges.erase(x, y);
-			ranges.insert(i, Range(wclo, wchi));
-		}
-#endif
 		return *this;
 	}
 	CSet &set(WChar wc) {
-#ifdef CHARSET
 		charset_add_char(charset, wc);	// FIXME: no error checking
 		return *this;
-#else
-		return set(wc, wc);
-#endif
 	}
 	bool test(WChar wc) const {
-#ifdef CHARSET
 		return charset_in_set(charset, wc);
-#else
-		if (wc < 0)
-			return false;
-		auto i = ranges.lower_bound(Range(wc, wc));
-		return i != ranges.end() && wc >= i->min && wc <= i->max;
-#endif
 	}
-	bool cclass(minrx_regcomp_flags_t flags, WConv_Encoding enc, const std::string &name) {
-#ifdef CHARSET
+	bool cclass(minrx_regcomp_flags_t flags, WConv_Encoding, const std::string &name) {
 		int result = charset_add_cclass(charset, name.c_str());
 		if ((flags & MINRX_REG_ICASE) != 0) {
 			if (name == "lower")
@@ -787,48 +725,11 @@ struct CSet {
 				charset_add_cclass(charset, "lower");	// FIXME: Add error checking
 		}
 		return result == CSET_SUCCESS;
-#else
-		auto wct = wctype(name.c_str());
-		if (wct) {
-			std::string key = name + ":" + setlocale(LC_CTYPE, NULL) + ":" + ((flags & MINRX_REG_ICASE) != 0 ? "1" : "0");
-			std::lock_guard<std::mutex> lock(cclmutex);
-			auto i = cclmemo.find(key);
-			if (i == cclmemo.end()) {
-				if (enc == Byte)
-					for (WChar b = 0; b <= 0xFF; ++b) {
-						if (iswctype(btowc(b), wct)) {
-							set(b);
-							if ((flags & MINRX_REG_ICASE) != 0) {
-								set(tolower(b));
-								set(toupper(b));
-							}
-						}
-					}
-				else
-					for (WChar wc = 0; wc <= WCharMax; ++wc) {
-						if (iswctype(wc, wct)) {
-							set(wc);
-							if ((flags & MINRX_REG_ICASE) != 0) {
-								set(towlower(wc));
-								set(towupper(wc));
-							}
-						}
-					}
-				cclmemo.emplace(key, *this);
-				i = cclmemo.find(key);
-			}
-			*this |= i->second; // N.B. could probably be safely outside the critical section, since cclmemo entries are never deleted
-			return true;
-		}
-		return false;
-#endif
 	}
-#ifndef CHARSET
 	void add_equiv(int32_t equiv) {
 		wchar_t wcs_in[2];
 		wchar_t wcs[2];
 		wchar_t abuf[100], wbuf[100];
-
 		wcs_in[0] = equiv;
 		wcs_in[1] = 0;
 		wcsxfrm(abuf, wcs_in, 99);
@@ -840,7 +741,6 @@ struct CSet {
 				set(u);
 		}
 	}
-#endif
 	minrx_result_t parse(minrx_regcomp_flags_t flags, WConv_Encoding enc, WConv &wconv) {
 		WChar wc = wconv_nextchr(&wconv);
 		bool inv = wc == L'^';
@@ -895,7 +795,6 @@ struct CSet {
 				} else if (wc == L'=') {
 					wc = wconv_nextchr(&wconv);
 					wclo = wchi = wc;
-#ifdef CHARSET
 					charset_add_equiv(charset, wc);	// FIXME: No error checking
 					if ((flags & MINRX_REG_ICASE) != 0) {
 						if (iswlower(wc))
@@ -903,15 +802,6 @@ struct CSet {
 						else if (iswupper(wc))
 							charset_add_equiv(charset, towlower(wc));	// FIXME: no error checking
 					}
-#else
-					add_equiv(wc);
-					if ((flags & MINRX_REG_ICASE) != 0) {
-						if (iswlower(wc))
-							add_equiv(towupper(wc));
-						else if (iswupper(wc))
-							add_equiv(towlower(wc));
-					}
-#endif
 					wc = wconv_nextchr(&wconv);
 					if (wc != L'=' || (wc = wconv_nextchr(&wconv)) != L']')
 						return MINRX_REG_ECOLLATE;
@@ -982,61 +872,26 @@ struct CSet {
 			return 0xF0 + (wc >> 18);
 		return 0xF4;
 	}
-	std::pair<std::optional<const std::array<bool, 256>>, std::optional<char>>
-	firstbytes(WConv_Encoding e) const {
-		std::array<bool, 256> fb = {};
-		auto firstunique = [](const std::array<bool, 256> &fb) -> std::optional<char> {
-			int n = 0, u = -1;
-			for (int i = 0; i < 256; ++i)
-				if (fb[i])
-					++n, u = i;
-			return n == 1 ? std::optional<char>(u) : std::optional<char>();
-		};
-		switch (e) {
-		case Byte:
-#ifdef CHARSET
-		{
+	bool
+	firstbytes(FirstBytes *fb, int32_t *fu, WConv_Encoding e) const {
+		for (int i = 0; i < 256; i++)
+			fb->vec[i] = false;
+		if (e == Byte || e == UTF8) {
 			int errcode = 0;
 			charset_firstbytes_t bytes = charset_firstbytes(charset, &errcode);
 			for (int i = 0; i < MAX_FIRSTBYTES; i++)
-				fb[i] = bytes.bytes[i];
+				fb->vec[i] = bytes.bytes[i];
+		} else {
+			return false;
 		}
-#else
-			for (const auto &r : ranges) {
-				if (r.min > 255)
-					break;
-				auto lo = r.min, hi = MIN(255, r.max);
-				for (auto b = lo; b <= hi; b++)
-					fb[b] = true;
-			}
-#endif
-			return {fb, firstunique(fb)};
-		case UTF8:
-#ifdef CHARSET
-		{
-			int errcode = 0;
-			charset_firstbytes_t bytes = charset_firstbytes(charset, &errcode);
-			for (int i = 0; i < MAX_FIRSTBYTES; i++)
-				fb[i] = bytes.bytes[i];
-		}
-#else
-			for (const auto &r : ranges) {
-				auto lo = utfprefix(r.min), hi = utfprefix(r.max);
-				for (auto b = lo; b <= hi; b++)
-					fb[b] = true;
-			}
-#endif
-			return {fb, firstunique(fb)};
-		default:
-			return {{}, {}};
-		}
+		int n = 0, u = -1;
+		for (int i = 0; i < 256; ++i)
+			if (fb->vec[i])
+				++n, u = i;
+		*fu = (n == 1) ? u : -1;
+		return true;
 	}
 };
-
-#ifndef CHARSET
-std::map<std::string, CSet> CSet::cclmemo;
-std::mutex CSet::cclmutex;
-#endif
 
 typedef size_t NInt;
 
@@ -1079,8 +934,9 @@ struct Regexp {
 	const Node *nodes;
 	size_t nnode;
 	std::optional<const CSet> firstcset;
-	std::optional<const std::array<bool, 256>> firstbytes;
-	std::optional<char> firstunique;
+	bool firstvalid;
+	FirstBytes firstbytes;
+	int32_t firstunique;
 	size_t nmin;
 	size_t nstk;
 	size_t nsub;
@@ -1737,17 +1593,17 @@ struct Compile {
 		qset_destruct(&epsq);
 		return cs;
 	}
-	std::pair<std::optional<const std::array<bool, 256>>, std::optional<char>>
-	firstbytes(WConv_Encoding e, const std::optional<CSet>& firstcset) {
+	bool
+	firstbytes(FirstBytes *fb, int32_t *fu, WConv_Encoding e, const std::optional<CSet>& firstcset) {
 		if (!firstcset.has_value())
-			return {};
-		return firstcset->firstbytes(e);
+			return false;
+		return firstcset->firstbytes(fb, fu, e);
 	}
 	Regexp *compile() {
 		Node *nodes = nullptr;
 		NInt nnode = 0;
 		if ((flags & MINRX_REG_MINDISABLE) != 0 && (flags & MINRX_REG_MINIMAL) != 0)
-			return new Regexp { enc, MINRX_REG_BADPAT, {}, nullptr, 0, {}, {}, {}, 0, 0, 1 };
+			return new Regexp { enc, MINRX_REG_BADPAT, {}, nullptr, 0, {}, false, {}, -1, 0, 0, 1 };
 		auto [lhs, nstk, hasmin, err] = alt(false, 0);
 		if (!err && (!emplace_final(&np, &lhs, Node::Exit, 0, 0, 0) || !(nodes = (Node *) malloc(lhs.size * sizeof (Node)))))
 			err = MINRX_REG_ESPACE;
@@ -1769,8 +1625,10 @@ struct Compile {
 		}
 		np = nullptr;
 		auto fc = firstclosure(nodes, nnode);	// FIXME: check for allocation errors
-		auto [fb, fu] = firstbytes(enc, fc);	// FIXME: check for allocation errors
-		return new Regexp{ enc, err, std::move(csets), nodes, nnode, std::move(fc), std::move(fb), std::move(fu), nmin, nstk, nsub + 1 };
+		FirstBytes fb;
+		int32_t fu = -1;
+		bool fv = firstbytes(&fb, &fu, enc, fc);
+		return new Regexp{ enc, err, std::move(csets), nodes, nnode, std::move(fc), fv, fb, fu, nmin, nstk, nsub + 1 };
 	}
 };
 
@@ -2042,16 +1900,16 @@ execute(Execute *e, size_t nm, minrx_regmatch_t *rm)
 			e->wcprev = wcnext, e->off = wconv_off(&e->wconv), wcnext = wconv_nextchr(&e->wconv);
 	NState nsinit;
 	nstate_construct(&nsinit, &e->allocator);
-	if ((e->flags & MINRX_REG_NOFIRSTBYTES) == 0 && e->r->firstbytes.has_value() && !e->r->firstcset->test(wcnext)) {
+	if ((e->flags & MINRX_REG_NOFIRSTBYTES) == 0 && e->r->firstvalid && !e->r->firstcset->test(wcnext)) {
 	zoom:
 		auto cp = e->wconv.cp, ep = e->wconv.ep;
-		if (e->r->firstunique.has_value()) {
-			cp = (const char *) memchr(cp, *e->r->firstunique, ep - cp);
+		if (e->r->firstunique != -1) {
+			cp = (const char *) memchr(cp, e->r->firstunique, ep - cp);
 			if (cp == nullptr)
 				goto exit;
 		} else {
-			auto firstbytes = *e->r->firstbytes;
-			while (cp != ep && !firstbytes[(unsigned char) *cp])
+			const bool *fbvec = e->r->firstbytes.vec;
+			while (cp != ep && !fbvec[(unsigned char) *cp])
 				++cp;
 			if (cp == ep)
 				goto exit;
@@ -2094,7 +1952,7 @@ execute(Execute *e, size_t nm, minrx_regmatch_t *rm)
 		if (qvec_empty(&mcsvs[1])) {
 			if (cowvec_valid(&e->best))
 				break;
-			if ((e->flags & MINRX_REG_NOFIRSTBYTES) == 0 && e->r->firstbytes.has_value())
+			if ((e->flags & MINRX_REG_NOFIRSTBYTES) == 0 && e->r->firstvalid)
 				goto zoom;
 		}
 		if (wcnext == End)
@@ -2115,7 +1973,7 @@ execute(Execute *e, size_t nm, minrx_regmatch_t *rm)
 		if (qvec_empty(&mcsvs[0])) {
 			if (cowvec_valid(&e->best))
 				break;
-			if ((e->flags & MINRX_REG_NOFIRSTBYTES) == 0 && e->r->firstbytes.has_value())
+			if ((e->flags & MINRX_REG_NOFIRSTBYTES) == 0 && e->r->firstvalid)
 				goto zoom;
 		}
 	}
