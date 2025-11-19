@@ -38,9 +38,7 @@
 
 // ISO C++
 #include <limits>
-#include <map>
 #include <optional>
-#include <string>
 #include <tuple>
 #include <vector>
 
@@ -709,19 +707,22 @@ struct CSet {
 		charset_add_range(charset, wclo, wchi);	// FIXME: no error checking
 		return *this;
 	}
-	CSet &set(WChar wc) {
-		charset_add_char(charset, wc);	// FIXME: no error checking
+	CSet &set(WChar wc, bool ignore_case = false) {
+		if (ignore_case)
+			charset_add_char_ic(charset, wc);	// FIXME: no error checking
+		else
+			charset_add_char(charset, wc);	// FIXME: no error checking
 		return *this;
 	}
 	bool test(WChar wc) const {
 		return charset_in_set(charset, wc);
 	}
-	bool cclass(minrx_regcomp_flags_t flags, WConv_Encoding, const std::string &name) {
-		int result = charset_add_cclass(charset, name.c_str());
+	bool cclass(minrx_regcomp_flags_t flags, WConv_Encoding, const char *bp, const char *ep) {
+		int result = charset_add_cclass2(charset, bp, ep);
 		if ((flags & MINRX_REG_ICASE) != 0) {
-			if (name == "lower")
+			if (strncmp(bp, "lower", 5) == 0)
 				charset_add_cclass(charset, "upper");	// FIXME: Add error checking
-			else if (name == "upper")
+			else if (strncmp(bp, "upper", 5) == 0)
 				charset_add_cclass(charset, "lower");	// FIXME: Add error checking
 		}
 		return result == CSET_SUCCESS;
@@ -788,8 +789,7 @@ struct CSet {
 					if (wc != L']')
 						return MINRX_REG_ECTYPE;
 					wc = wconv_nextchr(&wconv);
-					auto cclname = std::string(bp, ep);
-					if (cclass(flags, enc, cclname))
+					if (cclass(flags, enc, bp, ep))
 						continue;
 					return MINRX_REG_ECTYPE;
 				} else if (wc == L'=') {
@@ -805,6 +805,7 @@ struct CSet {
 					wc = wconv_nextchr(&wconv);
 					if (wc != L'=' || (wc = wconv_nextchr(&wconv)) != L']')
 						return MINRX_REG_ECOLLATE;
+					wc = wconv_nextchr(&wconv);
 				}
 			}
 			bool range = false;
@@ -1072,7 +1073,6 @@ struct Compile {
 	std::optional<size_t> esc_S;
 	std::optional<size_t> esc_w;
 	std::optional<size_t> esc_W;
-	std::map<WChar, unsigned int> icmap;
 	NInt nmin = 0;
 	NInt nsub = 0;
 	NodePool *np = 0;
@@ -1344,23 +1344,10 @@ struct Compile {
 				if (!emplace_first(&np, &lhs, (NInt) wc, 0, 0, nstk))
 					return {empty(), 0, false, MINRX_REG_ESPACE};
 			} else {
-				WChar wcl = enc == Byte ? tolower(wc) : towlower(wc);
-				WChar wcu = enc == Byte ? toupper(wc) : towupper(wc);
-				if (wc != wcl || wc != wcu) {
-					auto key = MIN(wc, MIN(wcl, wcu));
-					if (icmap.find(key) == icmap.end()) {
-						icmap.emplace(key, csets.size());
-						csets.emplace_back(enc);
-						csets.back().set(wc);
-						csets.back().set(wcl);
-						csets.back().set(wcu);
-					}
-					if (!emplace_final(&np, &lhs, Node::CSet, icmap[key], 0, nstk))
-						return {empty(), 0, false, MINRX_REG_ESPACE};
-				} else {
-					if (!emplace_final(&np, &lhs, (NInt) wc, 0, 0, nstk))
-						return {empty(), 0, false, MINRX_REG_ESPACE};
-				}
+				csets.emplace_back(enc);
+				csets.back().set(wc, true);
+				if (!emplace_final(&np, &lhs, Node::CSet, csets.size() - 1, 0, nstk))
+					return {empty(), 0, false, MINRX_REG_ESPACE};
 			}
 			wc = wconv_nextchr(&wconv);
 			break;

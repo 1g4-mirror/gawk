@@ -1,3 +1,7 @@
+2025-11-19         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* minrx.cpp, charset.h, charset.c: Updated.
+
 2025-11-16         Sevan Janiyan         <venture37@geeklan.co.uk>
 
 	* pma.c: Add define for MAP_ANONYMOUS for old macOS systems.
